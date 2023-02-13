@@ -2,24 +2,23 @@ from contextlib import nullcontext as does_not_raise
 
 import pytest
 import torch
+from torch_knn import utils
 from torch_knn.storage.base import Storage
 
 
 class StorageMock(Storage):
-    @classmethod
-    def check_shape(cls, storage: torch.Tensor) -> torch.Tensor:
-        """Checks whether the storage tensor shape is valid or not.
+    def check_shape(self, x):
+        return x
 
-        Args:
-            storage (torch.Tensor): The storage tensor.
+    def encode(self, x):
+        return x
 
-        Returns:
-            torch.Tensor: The input storage tensor.
+    def train(self, x):
+        return self
 
-        Raises:
-            ValueError: When given the wrong shape storage.
-        """
-        return storage
+    @property
+    def is_trained(self):
+        return True
 
 
 class TestStorage:
@@ -37,9 +36,22 @@ class TestStorage:
     def test___init__(self, dtype, expectation):
         x = torch.rand(3, 8)
         with expectation:
-            storage = StorageMock(x, dtype)
+            cfg = StorageMock.Config(x.size(-1), dtype=dtype)
+            storage = StorageMock(cfg, x)
         if expectation is does_not_raise():
             assert torch.equal(storage.storage, x.to(dtype))
+
+    def test_N(self):
+        x = torch.rand(10, 8)
+        cfg = StorageMock.Config(x.size(-1))
+        storage = StorageMock(cfg, x)
+        assert storage.N == x.size(0)
+
+    def test_D(self):
+        D = 8
+        cfg = StorageMock.Config(8)
+        storage = StorageMock(cfg)
+        assert storage.D == D
 
     @pytest.mark.parametrize(
         "dtype,expectation",
@@ -52,6 +64,23 @@ class TestStorage:
             (torch.uint8, pytest.raises(ValueError)),
         ],
     )
-    def test_check_dtype(self, dtype, expectation):
+    def test_check_supported_dtype(self, dtype, expectation):
         with expectation:
-            Storage.check_dtype(dtype)
+            Storage.check_supported_dtype(dtype)
+
+    def test_shape(self):
+        cfg = StorageMock.Config(int())
+        storage = StorageMock(cfg)
+        assert utils.is_equal_shape(storage.shape, [0])
+
+        x = torch.rand(3, 8)
+        cfg = StorageMock.Config(x.size(-1))
+        storage = StorageMock(cfg, x)
+        assert utils.is_equal_shape(storage.shape, x)
+
+    def test_add(self):
+        x = torch.rand(3, 8)
+        cfg = StorageMock.Config(x.size(-1))
+        storage = StorageMock(cfg)
+        storage.add(x)
+        torch.testing.assert_close(storage.storage, x)
