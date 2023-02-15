@@ -7,9 +7,6 @@ from torch_knn.storage.base import Storage
 
 
 class StorageMock(Storage):
-    def check_shape(self, x):
-        return x
-
     def encode(self, x):
         return x
 
@@ -40,14 +37,13 @@ class TestStorage:
         x = torch.rand(3, 8)
         with expectation:
             cfg = StorageMock.Config(x.size(-1), dtype=dtype)
-            storage = StorageMock(cfg, x)
-        if expectation is does_not_raise():
-            assert torch.equal(storage.storage, x.to(dtype))
+            StorageMock(cfg)
 
     def test_N(self):
         x = torch.rand(10, 8)
         cfg = StorageMock.Config(x.size(-1))
-        storage = StorageMock(cfg, x)
+        storage = StorageMock(cfg)
+        storage.add(x)
         assert storage.N == x.size(0)
 
     def test_D(self):
@@ -78,7 +74,8 @@ class TestStorage:
 
         x = torch.rand(3, 8)
         cfg = StorageMock.Config(x.size(-1))
-        storage = StorageMock(cfg, x)
+        storage = StorageMock(cfg)
+        storage.add(x)
         assert utils.is_equal_shape(storage.shape, x)
 
     def test_add(self):

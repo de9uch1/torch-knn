@@ -10,19 +10,14 @@ class Storage(abc.ABC):
 
     Args:
         cfg (Storage.Config): Configuration for this class.
-        storage (torch.Tensor): The storage object.
     """
 
     support_dtypes: Set[torch.dtype] = {torch.float32, torch.float16}
 
-    def __init__(
-        self,
-        cfg: "Storage.Config",
-        storage: torch.Tensor = torch.Tensor(),
-    ):
+    def __init__(self, cfg: "Storage.Config"):
         self.cfg = cfg
         self.dtype = cfg.dtype
-        self._storage = storage
+        self._storage = torch.Tensor()
 
     @dataclass
     class Config:
@@ -48,20 +43,6 @@ class Storage(abc.ABC):
     def D(self) -> int:
         """Dimension size of the vectors."""
         return self.cfg.D
-
-    @abc.abstractmethod
-    def check_shape(self, storage: torch.Tensor) -> torch.Tensor:
-        """Checks whether the storage tensor shape is valid or not.
-
-        Args:
-            storage (torch.Tensor): The storage tensor.
-
-        Returns:
-            torch.Tensor: The input storage tensor.
-
-        Raises:
-            ValueError: When given the wrong shape storage.
-        """
 
     @classmethod
     def check_supported_dtype(cls, dtype: torch.dtype) -> torch.dtype:

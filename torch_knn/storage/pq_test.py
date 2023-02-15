@@ -14,24 +14,6 @@ N = ksub * 5
 
 
 class TestPQStorage:
-    @pytest.mark.parametrize(
-        "shape,expectation",
-        [
-            ((N, D), does_not_raise()),
-        ],
-    )
-    def test_check_shape(self, shape, expectation):
-        cfg = PQStorage.Config(D, M=M, ksub=ksub)
-        x = torch.rand(shape)
-        storage = PQStorage(cfg)
-        storage.train(x)
-        codes = storage.encode(x)
-        with expectation:
-            storage.check_shape(codes)
-        storage.add(x)
-        with expectation:
-            storage.check_shape(storage.storage)
-
     def test_encode(self):
         cfg = PQStorage.Config(D, M=M, ksub=ksub)
         x = torch.rand(N, D)
@@ -60,16 +42,26 @@ class TestPQStorage:
         assert utils.is_equal_shape(x, recons)
         assert torch.less((x - recons).norm() ** 2 / x.norm() ** 2, 0.1)
 
-    def test_train(self):
+    @pytest.mark.parametrize(
+        "x,exception",
+        [
+            (torch.rand(N, D), does_not_raise()),
+            (torch.rand(2, N, D), pytest.raises(RuntimeError)),
+            (torch.rand(3), pytest.raises(RuntimeError)),
+            (torch.rand(N * M, dsub), pytest.raises(RuntimeError)),
+        ],
+    )
+    def test_train(self, x, exception):
         cfg = PQStorage.Config(D, M=M, ksub=ksub)
-        x = torch.rand(N, D)
         storage = PQStorage(cfg)
         torch.manual_seed(0)
-        storage = storage.train(x)
-        torch.manual_seed(0)
-        kmeans = ParallelKmeans(ksub, dsub, M)
-        codebook = kmeans.train(x.view(N, M, dsub))
-        torch.testing.assert_close(storage.codebook, codebook)
+        with exception:
+            storage = storage.train(x)
+        if exception == does_not_raise():
+            torch.manual_seed(0)
+            kmeans = ParallelKmeans(ksub, dsub, M)
+            codebook = kmeans.train(x.view(N, M, dsub))
+            torch.testing.assert_close(storage.codebook, codebook)
 
     def test_is_trained(self):
         cfg = PQStorage.Config(D, M=M, ksub=ksub)

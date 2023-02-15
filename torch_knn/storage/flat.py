@@ -9,26 +9,9 @@ class FlatStorage(Storage):
 
     Args:
         cfg (FlatStorage.Config): Configuration for this class.
-        storage (torch.Tensor): The storage object.
     """
 
     cfg: "FlatStorage.Config"
-
-    def check_shape(self, storage: torch.Tensor) -> torch.Tensor:
-        """Checks whether the storage tensor shape is valid or not.
-
-        Args:
-            storage (torch.Tensor): The storage tensor.
-
-        Returns:
-            torch.Tensor: The input storage tensor.
-
-        Raises:
-            ValueError: When given the wrong shape storage.
-        """
-        if storage.dim() != 2 or storage.size(-1) != self.D:
-            raise ValueError(f"The storage must be `N x D` dimensions.")
-        return storage
 
     @property
     def storage(self) -> torch.Tensor:

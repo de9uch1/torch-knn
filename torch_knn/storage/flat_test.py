@@ -8,22 +8,6 @@ D = 8
 
 
 class TestFlatStorage:
-    @pytest.mark.parametrize(
-        "shape,expectation",
-        [
-            ((1,), pytest.raises(ValueError)),
-            ((3, D), does_not_raise()),
-            ((3, 16), pytest.raises(ValueError)),
-            ((4, 2, 3), pytest.raises(ValueError)),
-        ],
-    )
-    def test_check_shape(self, shape, expectation):
-        cfg = FlatStorage.Config(D)
-        x = torch.rand(shape)
-        storage = FlatStorage(cfg)
-        with expectation:
-            storage.check_shape(x)
-
     def test_encode(self):
         cfg = FlatStorage.Config(D)
         x = torch.rand(3, D)

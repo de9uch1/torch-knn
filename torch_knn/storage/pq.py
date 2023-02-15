@@ -10,7 +10,7 @@ class PQStorage(Storage):
     """Product Quantized storage class.
 
     Args:
-        storage (torch.Tensor): The storage object.
+        cfg (PQStorage.Config): Configuration for this class.
 
     Attributes:
         - storage (torch.Tensor): The PQ code storage of shape `(N, M)`.
@@ -18,12 +18,9 @@ class PQStorage(Storage):
     """
 
     def __init__(
-        self,
-        cfg: "PQStorage.Config",
-        storage: torch.Tensor = torch.Tensor(),
-        codebook: Optional[torch.Tensor] = None,
+        self, cfg: "PQStorage.Config", codebook: Optional[torch.Tensor] = None
     ):
-        super().__init__(cfg, storage=storage)
+        super().__init__(cfg)
         self._codebook = codebook
 
     @dataclass
@@ -67,22 +64,6 @@ class PQStorage(Storage):
     def codebook(self) -> Optional[torch.Tensor]:
         """PQ codebook of shape `(M, ksub, dsub)`."""
         return self._codebook
-
-    def check_shape(self, storage: torch.Tensor) -> torch.Tensor:
-        """Checks whether the storage tensor shape is valid or not.
-
-        Args:
-            storage (torch.Tensor): The storage tensor.
-
-        Returns:
-            torch.Tensor: The input storage tensor.
-
-        Raises:
-            ValueError: When given the wrong shape storage.
-        """
-        if storage.dim() != 2 or storage.size(-1) != self.M:
-            raise ValueError(f"The storage must be `N x M` dimensions.")
-        return storage
 
     @property
     def storage(self) -> torch.Tensor:
@@ -150,6 +131,9 @@ class PQStorage(Storage):
         Returns:
             PQStorage: The trained storage object.
         """
+        if x.dim() != 2 or x.size(-1) != self.D:
+            raise RuntimeError("The input vectors must have `(N, D)` dimensions.")
+
         kmeans = ParallelKmeans(self.ksub, self.dsub, self.M)
         self._codebook = kmeans.train(x.view(x.size(0), self.M, self.dsub))
         return self
