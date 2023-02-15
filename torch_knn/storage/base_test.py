@@ -13,6 +13,9 @@ class StorageMock(Storage):
     def encode(self, x):
         return x
 
+    def decode(self, x):
+        return x
+
     def train(self, x):
         return self
 

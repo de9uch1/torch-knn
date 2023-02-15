@@ -160,7 +160,9 @@ class ParallelKmeans(Kmeans):
         for k in range(self.ncentroids):
             # nspaces x n
             k_mask = assigns.eq(k).unsqueeze(-1).float()
-            new_centroids[:, k] = (x * k_mask / k_mask.sum(dim=1, keepdim=True)).sum(1)
+            new_centroids[:, k] = (
+                x * k_mask / (k_mask.sum(dim=1, keepdim=True) + 1e-9)
+            ).sum(1)
         return new_centroids.to(dtype)
 
     def train(self, x: Tensor, niter: int = 10) -> Tensor:

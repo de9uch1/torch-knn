@@ -102,6 +102,17 @@ class Storage(abc.ABC):
         """
 
     @abc.abstractmethod
+    def decode(self, x: torch.Tensor) -> torch.Tensor:
+        """Decodes the given vectors or codes.
+
+        Args:
+            x (torch.Tensor): The input vectors or codes.
+
+        Returns:
+            torch.Tensor: Decoded vectors.
+        """
+
+    @abc.abstractmethod
     def train(self, x: torch.Tensor) -> "Storage":
         """Trains the index with the given vectors.
 

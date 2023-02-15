@@ -48,6 +48,19 @@ class FlatStorage(Storage):
         """
         return x
 
+    def decode(self, x: torch.Tensor) -> torch.Tensor:
+        """Decodes the given vectors.
+
+        FlatStorage class returns the identity mapping of `x`.
+
+        Args:
+            x (torch.Tensor): The input vectors of shape `(N, D)`.
+
+        Returns:
+            torch.Tensor: Decoded vectors of shape `(N, D)`.
+        """
+        return x
+
     def train(self, x: torch.Tensor) -> "FlatStorage":
         """Trains the index with the given vectors.
 
