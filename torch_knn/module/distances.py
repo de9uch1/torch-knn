@@ -6,15 +6,15 @@ def compute_distance(a: torch.Tensor, b: torch.Tensor, metric: Metric) -> torch.
     """Computes distance between two vectors.
 
     Args:
-        a (torch.Tensor): Input vectors of shape `(n, dim)`.
-        b (torch.Tensor): Input vectors of shape `(m, dim)`.
+        a (torch.Tensor): Input vectors of shape `(n, dim)` or `(b, n, dim)`.
+        b (torch.Tensor): Input vectors of shape `(m, dim)` or `(b, m, dim)`.
 
     Returns:
-        torch.Tensor: Distance tensor of shape `(n, m)`.
+        torch.Tensor: Distance tensor of shape `(n, m)` or `(b, n, m)`.
     """
     if metric == Metric.L2:
         return torch.cdist(a, b)
     elif metric == Metric.IP:
-        return torch.einsum("nd,md->nm", a, b)
+        return torch.einsum("...nd,...md->...nm", a, b)
     else:
         raise NotImplementedError
