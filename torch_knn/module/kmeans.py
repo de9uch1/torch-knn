@@ -1,0 +1,78 @@
+import torch
+from torch import Tensor
+from torch_knn.constants import CentroidsInit, Metric
+from torch_knn.module.distances import compute_distance
+
+
+class Kmeans:
+    """Kmeans clustering class.
+
+    Args:
+        ncentroids (int): The number of centroids.
+        dim (int): The dimension size of centroids.
+        metric (Metric): Distance metric function.
+        init (CentroidsInit): Initialization method of the centroids.
+    """
+
+    def __init__(
+        self,
+        ncentroids: int,
+        dim: int,
+        metric: Metric = Metric.L2,
+        init: CentroidsInit = CentroidsInit.RANDOM,
+    ):
+        self.ncentroids = ncentroids
+        self.dim = dim
+        self.metric = metric
+        self.init = init
+
+        self.centroids: Tensor
+        if self.init == CentroidsInit.RANDOM:
+            self.centroids = torch.rand(self.ncentroids, self.dim)
+        else:
+            raise NotImplementedError
+
+    def assign(self, x: Tensor) -> Tensor:
+        """Assigns the nearest neighbor centroid ID.
+
+        Args:
+            x (torch.Tensor): Assigned vectors of shape `(n, dim)`.
+
+        Returns:
+            torch.Tensor: Assigned IDs of shape `(n,)`.
+        """
+        return compute_distance(x, self.centroids, self.metric).argmin(dim=1)
+
+    def update(self, x: Tensor, assigns: Tensor) -> Tensor:
+        """Updates the centroids.
+
+        Args:
+            x (torch.Tensor): Sample vectors of shape `(n, dim)`.
+            assigns (torch.Tensor): Assigned centroids of the given input vectors of shape `(n,)`.
+
+        Returns:
+            torch.Tensor: New centroid vectors of shape `(ncentroids, dim)`.
+        """
+        new_centroids = self.centroids
+        for k in range(self.ncentroids):
+            new_centroids[k] = x[assigns == k].mean(dim=0)
+        return new_centroids
+
+    def train(self, x: Tensor, niter: int = 10) -> Tensor:
+        """Trains k-means.
+
+        Args:
+            x (torch.Tensor): Input vectors of shape `(n, dim)`.
+            niter (int): Number of training iteration.
+
+        Returns:
+            Tensor: Centroids tensor of shape `(ncentroids, dim)`
+        """
+        assigns = x.new_full((x.size(0),), fill_value=-1)
+        for i in range(niter):
+            new_assigns = self.assign(x)
+            if torch.equal(new_assigns, assigns):
+                break
+            assigns = new_assigns
+            self.centroids = self.update(x, assigns)
+        return self.centroids
