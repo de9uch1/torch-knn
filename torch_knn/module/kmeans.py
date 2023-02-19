@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor
 from torch_knn.constants import CentroidsInit
-from torch_knn.module.metrics import L2Metric, Metric
+from torch_knn.metrics import L2Metric, Metric
 
 
 class Kmeans:

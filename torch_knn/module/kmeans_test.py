@@ -3,7 +3,7 @@ import torch
 from torch_knn import utils
 from torch_knn.constants import CentroidsInit
 from torch_knn.module.kmeans import Kmeans, ParallelKmeans
-from torch_knn.module.metrics import CosineMetric, IPMetric, L2Metric
+from torch_knn.metrics import CosineMetric, IPMetric, L2Metric
 
 N = 100
 D = 8

@@ -1,7 +1,7 @@
 import pytest
 import torch
 from torch import Tensor
-from torch_knn.module.metrics import IPMetric, L2Metric, Metric
+from torch_knn.metrics import IPMetric, L2Metric, Metric
 
 B = 3
 N = 2

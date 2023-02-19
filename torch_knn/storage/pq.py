@@ -3,7 +3,7 @@ from typing import Optional
 
 import torch
 from torch_knn.module.kmeans import ParallelKmeans
-from torch_knn.module.metrics import L2Metric
+from torch_knn.metrics import L2Metric
 from torch_knn.storage.base import Storage
 
 
