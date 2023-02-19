@@ -114,7 +114,7 @@ class PQStorage(Storage):
 
         # x[n, m, d] = codebook[m][codes[n][m]][d]
         x = self.codebook[torch.arange(self.M), codes]
-        # (N, M, 1, dsub) -> (N, D)
+        # x: N x M x dsub -> N x D
         return x.view(N, self.D).to(self.dtype)
 
     @property
