@@ -17,7 +17,7 @@ class Storage(abc.ABC):
     def __init__(self, cfg: "Storage.Config"):
         self.cfg = cfg
         self.dtype = cfg.dtype
-        self._storage = torch.Tensor()
+        self._data = torch.Tensor()
 
     @dataclass
     class Config:
@@ -37,7 +37,7 @@ class Storage(abc.ABC):
     @property
     def N(self) -> int:
         """The number of vectors that are added to the storage."""
-        return self.storage.size(0)
+        return self.data.size(0)
 
     @property
     def D(self) -> int:
@@ -62,14 +62,14 @@ class Storage(abc.ABC):
         return dtype
 
     @property
-    def storage(self) -> torch.Tensor:
-        """Storage object."""
-        return self._storage
+    def data(self) -> torch.Tensor:
+        """Data object."""
+        return self._data
 
     @property
     def shape(self) -> torch.Size:
         """Returns the shape of the storage tensor."""
-        return self.storage.shape
+        return self.data.shape
 
     @abc.abstractmethod
     def encode(self, x: torch.Tensor) -> torch.Tensor:
@@ -115,4 +115,4 @@ class Storage(abc.ABC):
         Args:
             x (torch.Tensor): The input vectors of shape `(N, D)`.
         """
-        self._storage = torch.cat([self.storage, self.encode(x.to(self.dtype))])
+        self._data = torch.cat([self.data, self.encode(x.to(self.dtype))])

@@ -3,6 +3,7 @@ from typing import Optional
 
 import torch
 from torch_knn.module.kmeans import ParallelKmeans
+from torch_knn.module.metrics import L2Metric
 from torch_knn.storage.base import Storage
 
 
@@ -66,9 +67,9 @@ class PQStorage(Storage):
         return self._codebook
 
     @property
-    def storage(self) -> torch.Tensor:
+    def data(self) -> torch.Tensor:
         """Storage object of shape `(N, M)`."""
-        return self._storage
+        return self._data
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         """Encodes the given vectors.
@@ -91,11 +92,9 @@ class PQStorage(Storage):
         # x: N x D -> M x N x dsub
         x = x.view(N, self.M, self.dsub).transpose(0, 1).contiguous()
 
-        # distance: M x N x ksub
-        distance = torch.cdist(x, self.codebook)
-        return (
-            distance.argmin(dim=-1).to(self.cfg.code_dtype).transpose(0, 1).contiguous()
-        )
+        # assignments: M x N x ksub
+        assignments = L2Metric.assign(x, self.codebook)
+        return assignments.to(self.cfg.code_dtype).transpose(0, 1).contiguous()
 
     def decode(self, codes: torch.Tensor) -> torch.Tensor:
         """Decodes the given vectors.

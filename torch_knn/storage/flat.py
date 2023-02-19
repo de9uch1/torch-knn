@@ -14,9 +14,9 @@ class FlatStorage(Storage):
     cfg: "FlatStorage.Config"
 
     @property
-    def storage(self) -> torch.Tensor:
+    def data(self) -> torch.Tensor:
         """Storage object of shape `(N, D)`."""
-        return self._storage
+        return self._data
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         """Encodes the given vectors.

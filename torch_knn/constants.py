@@ -1,10 +1,7 @@
 from enum import Enum
+from typing import Tuple
 
-
-class Metric(Enum):
-    L2 = "L2"
-    IP = "IP"
-    COS = "cos"
+import torch
 
 
 class CentroidsInit(Enum):

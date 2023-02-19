@@ -1,8 +1,9 @@
 import pytest
 import torch
 from torch_knn import utils
-from torch_knn.constants import CentroidsInit, Metric
+from torch_knn.constants import CentroidsInit
 from torch_knn.module.kmeans import Kmeans, ParallelKmeans
+from torch_knn.module.metrics import CosineMetric, IPMetric, L2Metric
 
 N = 100
 D = 8
@@ -11,7 +12,7 @@ M = 2
 
 
 class TestKmeans:
-    @pytest.mark.parametrize("metric", list(Metric))
+    @pytest.mark.parametrize("metric", [L2Metric(), IPMetric(), CosineMetric()])
     @pytest.mark.parametrize("init", list(CentroidsInit))
     def test___init__(self, metric, init):
         if init not in {CentroidsInit.RANDOM}:
@@ -58,7 +59,7 @@ class TestKmeans:
 
 
 class TestParallelKmeans:
-    @pytest.mark.parametrize("metric", list(Metric))
+    @pytest.mark.parametrize("metric", [L2Metric(), IPMetric(), CosineMetric()])
     @pytest.mark.parametrize("init", list(CentroidsInit))
     def test___init__(self, metric, init):
         if init not in {CentroidsInit.RANDOM}:

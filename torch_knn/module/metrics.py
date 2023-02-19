@@ -1,0 +1,116 @@
+import abc
+from typing import Tuple
+
+import torch
+from torch import Tensor
+
+
+class Metric(abc.ABC):
+    """Base class for metric classes."""
+
+    @staticmethod
+    @abc.abstractmethod
+    def compute_distance(a: Tensor, b: Tensor) -> Tensor:
+        """Computes distance between two vectors.
+
+        Args:
+            a (torch.Tensor): Input vectors of shape `(n, dim)` or `(b, n, dim)`.
+            b (torch.Tensor): Input vectors of shape `(m, dim)` or `(b, m, dim)`.
+
+        Returns:
+            torch.Tensor: Distance tensor of shape `(n, m)` or `(b, n, m)`.
+        """
+
+    @staticmethod
+    def topk(distances: Tensor, k: int) -> Tuple[Tensor, Tensor]:
+        """Gets k-nearest-neighbors under the metric.
+
+        Args:
+            distances (torch.Tensor): Distance table of shape `(n, m)`.
+            k (int): Top-k width.
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]:
+              - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
+              - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
+        """
+        return torch.topk(distances, k=k, dim=-1, largest=False)
+
+    @classmethod
+    def assign(cls, querys: Tensor, keys: Tensor) -> Tensor:
+        """Assigns the nearest neighbor IDs.
+
+        Args:
+            querys (torch.Tensor): Input vectors of shape `(n, dim)` or `(b, n, dim)`.
+            keys (torch.Tensor): Input vectors of shape `(m, dim)` or `(b, m, dim)`.
+
+        Returns:
+            torch.Tensor: Indices of the nearest-neighbors of shape `(n,)`.
+        """
+        return cls.compute_distance(querys, keys).argmin(dim=-1)
+
+
+class L2Metric(Metric):
+    """L2 metric for squared Euclidean distance computation."""
+
+    @staticmethod
+    def compute_distance(a: Tensor, b: Tensor) -> Tensor:
+        """Computes distance between two vectors.
+
+        Args:
+            a (torch.Tensor): Input vectors of shape `(n, dim)` or `(b, n, dim)`.
+            b (torch.Tensor): Input vectors of shape `(m, dim)` or `(b, m, dim)`.
+
+        Returns:
+            torch.Tensor: Distance tensor of shape `(n, m)` or `(b, n, m)`.
+        """
+        return torch.cdist(a, b, p=2) ** 2
+
+
+class IPMetric(Metric):
+    """IP metric for inner product distance computation."""
+
+    @staticmethod
+    def compute_distance(a: Tensor, b: Tensor) -> Tensor:
+        """Computes distance between two vectors.
+
+        Args:
+            a (torch.Tensor): Input vectors of shape `(n, dim)` or `(b, n, dim)`.
+            b (torch.Tensor): Input vectors of shape `(m, dim)` or `(b, m, dim)`.
+
+        Returns:
+            torch.Tensor: Distance tensor of shape `(n, m)` or `(b, n, m)`.
+        """
+        return torch.einsum("...nd,...md->...nm", a, b)
+
+    @staticmethod
+    def topk(distances: Tensor, k: int) -> Tuple[Tensor, Tensor]:
+        """Gets k-nearest-neighbors under the metric.
+
+        Args:
+            distances (torch.Tensor): Distance table of shape `(n, m)`.
+            k (int): Top-k width.
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]:
+              - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
+              - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
+        """
+        return torch.topk(distances, k=k, dim=-1, largest=True)
+
+    @classmethod
+    def assign(cls, querys: Tensor, keys: Tensor) -> Tensor:
+        """Assigns the nearest neighbor IDs.
+
+        Args:
+            querys (torch.Tensor): Input vectors of shape `(n, dim)` or `(b, n, dim)`.
+            keys (torch.Tensor): Input vectors of shape `(m, dim)` or `(b, m, dim)`.
+
+        Returns:
+            torch.Tensor: Indices of the nearest-neighbors of shape `(n,)`.
+        """
+        return cls.compute_distance(querys, keys).argmax(dim=-1)
+
+
+class CosineMetric(IPMetric):
+    """Cosine metric for cosine similarity computation."""

@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor
-from torch_knn.constants import CentroidsInit, Metric
-from torch_knn.module.distances import compute_distance
+from torch_knn.constants import CentroidsInit
+from torch_knn.module.metrics import L2Metric, Metric
 
 
 class Kmeans:
@@ -18,7 +18,7 @@ class Kmeans:
         self,
         ncentroids: int,
         dim: int,
-        metric: Metric = Metric.L2,
+        metric: Metric = L2Metric(),
         init: CentroidsInit = CentroidsInit.RANDOM,
     ) -> None:
         self.ncentroids = ncentroids
@@ -54,7 +54,7 @@ class Kmeans:
         Returns:
             torch.Tensor: Assigned IDs of shape `(n,)`.
         """
-        return compute_distance(x, self.centroids, self.metric).argmin(dim=1)
+        return self.metric.assign(x, self.centroids)
 
     def update(self, x: Tensor, assigns: Tensor) -> Tensor:
         """Updates the centroids.
@@ -101,7 +101,7 @@ class ParallelKmeans(Kmeans):
         ncentroids (int): The number of centroids.
         dim (int): The dimension size of centroids.
         nspaces (int): The number of subspaces.
-        metric (Metric): Distance metric function.
+        metric (Type[Metric]): Distance metric function.
         init (CentroidsInit): Initialization method of the centroids.
     """
 
@@ -110,7 +110,7 @@ class ParallelKmeans(Kmeans):
         ncentroids: int,
         dim: int,
         nspaces: int,
-        metric: Metric = Metric.L2,
+        metric: Metric = L2Metric(),
         init: CentroidsInit = CentroidsInit.RANDOM,
     ) -> None:
         self.nspaces = nspaces
@@ -142,7 +142,7 @@ class ParallelKmeans(Kmeans):
         Returns:
             torch.Tensor: Assigned IDs of shape `(nspaces, n)`.
         """
-        return compute_distance(x, self.centroids, self.metric).argmin(dim=-1)
+        return self.metric.assign(x, self.centroids)
 
     def update(self, x: Tensor, assigns: Tensor) -> Tensor:
         """Updates the centroids.

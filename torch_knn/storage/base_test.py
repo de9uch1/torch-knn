@@ -83,4 +83,4 @@ class TestStorage:
         cfg = StorageMock.Config(x.size(-1))
         storage = StorageMock(cfg)
         storage.add(x)
-        torch.testing.assert_close(storage.storage, x)
+        torch.testing.assert_close(storage.data, x)
