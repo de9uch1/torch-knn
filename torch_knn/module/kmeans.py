@@ -25,6 +25,7 @@ class Kmeans:
         self.dim = dim
         self.metric = metric
         self.init = init
+        self.centroids = None
 
     def init_centroids(self, init: CentroidsInit) -> Tensor:
         """Initializes cluster centorids.
@@ -68,6 +69,11 @@ class Kmeans:
         for k in range(self.ncentroids):
             new_centroids[k] = x[assigns == k].mean(dim=0)
         return new_centroids
+
+    @property
+    def is_trained(self) -> bool:
+        """Returns whether the centroids are trained or not."""
+        return self.centroids is not None
 
     def train(self, x: Tensor, niter: int = 10) -> Tensor:
         """Trains k-means.
