@@ -36,3 +36,22 @@ def is_equal_shape(
     else:
         raise NotImplementedError(f"Type of `b` (`{type(b)}`) is not supported.")
     return a_shape == b_shape
+
+
+def pad(tensors: List[torch.Tensor], padding_idx: int) -> torch.Tensor:
+    """Pads multiple sequences into a single tensor.
+
+    Args:
+        tensors (List[Tensor]): A list of 1-D tensors.
+        padding_idx (int): Padding index.
+
+    Returns:
+        torch.Tensor: Padded tensor.
+    """
+    max_len = max(len(t) for t in tensors)
+    new_tensor = torch.full(
+        (len(tensors), max_len), fill_value=padding_idx, dtype=tensors[0].dtype
+    )
+    for i, t in enumerate(tensors):
+        new_tensor[i, : len(t)] = t
+    return new_tensor

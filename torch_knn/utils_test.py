@@ -30,3 +30,14 @@ def test_is_equal_shape(a, b, a_type, b_type):
             utils.is_equal_shape(a_shape, b_shape)
     else:
         assert utils.is_equal_shape(a_shape, b_shape) == expected
+
+
+def test_pad():
+    N = 4
+    L = 5
+    padding_idx = -1
+    tensors = [torch.arange(i + L) for i in range(N)]
+    expected = torch.zeros(N, L + N - 1, dtype=torch.long).fill_(padding_idx)
+    for i, t in enumerate(tensors):
+        expected[i, :len(t)] = t
+    assert torch.equal(utils.pad(tensors, padding_idx), expected)
