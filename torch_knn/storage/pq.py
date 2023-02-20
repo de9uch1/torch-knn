@@ -32,11 +32,13 @@ class PQStorage(Storage):
             M (int): The number of sub-vectors.
             ksub (int): Codebook size of a sub-space. (default: 256)
             code_dtype (torch.dtype): DType for stored codes. (default: torch.uint8)
+            train_niter (int): Number of training iteration.
         """
 
         M: int = 1
         ksub: int = 256
         code_dtype: torch.dtype = torch.uint8
+        train_niter: int = 10
 
         def __post_init__(self):
             if self.D % self.M > 0:
@@ -132,5 +134,7 @@ class PQStorage(Storage):
             raise RuntimeError("The input vectors must have `(N, D)` dimensions.")
 
         kmeans = ParallelKmeans(self.ksub, self.dsub, self.M)
-        self._codebook = kmeans.train(x.view(x.size(0), self.M, self.dsub))
+        self._codebook = kmeans.train(
+            x.view(x.size(0), self.M, self.dsub), self.cfg.train_niter
+        )
         return self
