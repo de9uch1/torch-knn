@@ -2,8 +2,8 @@ import pytest
 import torch
 from torch_knn import utils
 from torch_knn.constants import CentroidsInit
-from torch_knn.module.kmeans import Kmeans, ParallelKmeans
 from torch_knn.metrics import CosineMetric, IPMetric, L2Metric
+from torch_knn.module.kmeans import Kmeans, ParallelKmeans
 
 N = 100
 D = 8
@@ -15,33 +15,36 @@ class TestKmeans:
     @pytest.mark.parametrize("metric", [L2Metric(), IPMetric(), CosineMetric()])
     @pytest.mark.parametrize("init", list(CentroidsInit))
     def test___init__(self, metric, init):
-        if init not in {CentroidsInit.RANDOM}:
-            with pytest.raises(NotImplementedError):
-                Kmeans(C, D, metric=metric, init=init)
-        else:
-            kmeans = Kmeans(C, D, metric=metric, init=init)
-            assert kmeans.ncentroids == C
-            assert kmeans.dim == D
-            assert kmeans.metric == metric
+        kmeans = Kmeans(C, D, metric=metric, init=init)
+        assert kmeans.ncentroids == C
+        assert kmeans.dim == D
+        assert kmeans.metric == metric
+        assert kmeans.init == init
 
     @pytest.mark.parametrize("init", list(CentroidsInit))
     def test_init_centroids(self, init):
+        kmeans = Kmeans(C, D, init=init)
         if init not in {CentroidsInit.RANDOM}:
             with pytest.raises(NotImplementedError):
-                Kmeans(C, D, init=init)
+                kmeans.init_centroids(init)
+        else:
+            assert utils.is_equal_shape(kmeans.init_centroids(init), [C, D])
 
     def test_assign(self):
         x = torch.rand(N, D)
+        centroids = torch.rand(C, D)
         kmeans = Kmeans(C, D)
-        centroids = kmeans.centroids
+        kmeans.centroids = centroids
         assigns = kmeans.assign(x)
         expected = ((x[:, None] - centroids[None, :]) ** 2).sum(dim=-1).argmin(dim=1)
         assert torch.equal(assigns, expected)
 
     def test_update(self):
         x = torch.rand(N, D)
+        centroids = torch.rand(C, D)
         assigns = torch.randint(0, C, (N,))
         kmeans = Kmeans(C, D)
+        kmeans.centroids = centroids
         new_centroids = kmeans.update(x, assigns)
         assert torch.allclose(new_centroids, kmeans.centroids)
 
@@ -50,46 +53,54 @@ class TestKmeans:
             expected[c] = x[assigns == c].mean(dim=0)
         assert torch.allclose(new_centroids, expected)
 
-    def test_train(self):
+    @pytest.mark.parametrize("init", list(CentroidsInit))
+    def test_train(self, init):
         torch.manual_seed(0)
+        kmeans = Kmeans(C, D, init=init)
         x = torch.rand(N, D)
-        kmeans = Kmeans(C, D)
-        centroids = kmeans.train(x)
-        assert utils.is_equal_shape(centroids, [C, D])
+        if init not in {CentroidsInit.RANDOM}:
+            with pytest.raises(NotImplementedError):
+                kmeans.train(x)
+        else:
+            centroids = kmeans.train(x)
+            assert utils.is_equal_shape(centroids, [C, D])
 
 
 class TestParallelKmeans:
     @pytest.mark.parametrize("metric", [L2Metric(), IPMetric(), CosineMetric()])
     @pytest.mark.parametrize("init", list(CentroidsInit))
     def test___init__(self, metric, init):
-        if init not in {CentroidsInit.RANDOM}:
-            with pytest.raises(NotImplementedError):
-                ParallelKmeans(C, D, M, metric=metric, init=init)
-        else:
-            kmeans = ParallelKmeans(C, D, M, metric=metric, init=init)
-            assert kmeans.ncentroids == C
-            assert kmeans.dim == D
-            assert kmeans.nspaces == M
-            assert kmeans.metric == metric
+        kmeans = ParallelKmeans(C, D, M, metric=metric, init=init)
+        assert kmeans.ncentroids == C
+        assert kmeans.dim == D
+        assert kmeans.nspaces == M
+        assert kmeans.metric == metric
+        assert kmeans.init == init
 
     @pytest.mark.parametrize("init", list(CentroidsInit))
     def test_init_centroids(self, init):
+        kmeans = ParallelKmeans(C, D, M, init=init)
         if init not in {CentroidsInit.RANDOM}:
             with pytest.raises(NotImplementedError):
-                ParallelKmeans(C, D, M, init=init)
+                kmeans.init_centroids(init)
+        else:
+            assert utils.is_equal_shape(kmeans.init_centroids(init), [M, C, D])
 
     def test_assign(self):
         x = torch.rand(M, N, D)
+        centroids = torch.rand(C, D)
         kmeans = ParallelKmeans(C, D, M)
-        centroids = kmeans.centroids
+        kmeans.centroids = centroids
         assigns = kmeans.assign(x)
         expected = torch.cdist(x, centroids).argmin(dim=-1)
         assert torch.equal(assigns, expected)
 
     def test_update(self):
         x = torch.rand(M, N, D)
+        centroids = torch.rand(M, C, D)
         assigns = torch.randint(0, C, (M, N))
         kmeans = ParallelKmeans(C, D, M)
+        kmeans.centroids = centroids
         new_centroids = kmeans.update(x, assigns)
         assert torch.allclose(new_centroids, kmeans.centroids)
 
@@ -99,9 +110,14 @@ class TestParallelKmeans:
                 expected[m, c] = x[m][assigns[m] == c].mean(dim=0)
         assert torch.allclose(new_centroids, expected)
 
-    def test_train(self):
+    @pytest.mark.parametrize("init", list(CentroidsInit))
+    def test_train(self, init):
         torch.manual_seed(0)
         x = torch.rand(N, M, D)
-        kmeans = ParallelKmeans(C, D, M)
-        centroids = kmeans.train(x)
-        assert utils.is_equal_shape(centroids, [M, C, D])
+        kmeans = ParallelKmeans(C, D, M, init=init)
+        if init not in {CentroidsInit.RANDOM}:
+            with pytest.raises(NotImplementedError):
+                kmeans.train(x)
+        else:
+            centroids = kmeans.train(x)
+            assert utils.is_equal_shape(centroids, [M, C, D])

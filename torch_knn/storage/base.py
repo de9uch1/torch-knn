@@ -2,6 +2,8 @@ import abc
 from dataclasses import dataclass
 from typing import Set
 
+from torch_knn.metrics import L2Metric, Metric
+
 import torch
 
 
@@ -17,6 +19,7 @@ class Storage(abc.ABC):
     def __init__(self, cfg: "Storage.Config"):
         self.cfg = cfg
         self.dtype = cfg.dtype
+        self.metric = cfg.metric
         self._data = torch.Tensor()
 
     @dataclass
@@ -26,10 +29,12 @@ class Storage(abc.ABC):
         Args:
             D (int): Dimension size of input vectors.
             dtype (torch.dtype): The input vector dtype. (default: torch.float32)
+            metric (Metric): Metric for dinstance computation.
         """
 
         D: int
         dtype: torch.dtype = torch.float32
+        metric: Metric = L2Metric()
 
         def __post_init__(self):
             Storage.check_supported_dtype(self.dtype)

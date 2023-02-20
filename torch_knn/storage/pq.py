@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Optional
 
 import torch
-from torch_knn.module.kmeans import ParallelKmeans
 from torch_knn.metrics import L2Metric
+from torch_knn.module.kmeans import ParallelKmeans
 from torch_knn.storage.base import Storage
 
 
@@ -14,15 +14,13 @@ class PQStorage(Storage):
         cfg (PQStorage.Config): Configuration for this class.
 
     Attributes:
-        - storage (torch.Tensor): The PQ code storage of shape `(N, M)`.
+        - data (torch.Tensor): The PQ code storage of shape `(N, M)`.
         - codebook (torch.Tensor): The PQ codebook of shape `(M, ksub, dsub)`.
     """
 
-    def __init__(
-        self, cfg: "PQStorage.Config", codebook: Optional[torch.Tensor] = None
-    ):
+    def __init__(self, cfg: "PQStorage.Config"):
         super().__init__(cfg)
-        self._codebook = codebook
+        self._codebook = None
 
     @dataclass
     class Config(Storage.Config):

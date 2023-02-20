@@ -26,8 +26,6 @@ class Kmeans:
         self.metric = metric
         self.init = init
 
-        self.centroids = self.init_centroids(init)
-
     def init_centroids(self, init: CentroidsInit) -> Tensor:
         """Initializes cluster centorids.
 
@@ -81,6 +79,8 @@ class Kmeans:
         Returns:
             Tensor: Centroids tensor of shape `(ncentroids, dim)`.
         """
+        self.centroids = self.init_centroids(self.init)
+
         assigns = x.new_full((x.size(0),), fill_value=-1)
         for i in range(niter):
             new_assigns = self.assign(x)
@@ -175,6 +175,8 @@ class ParallelKmeans(Kmeans):
         Returns:
             Tensor: Centroids tensor of shape `(nspaces, ncentroids, dim)`.
         """
+        self.centroids = self.init_centroids(self.init)
+
         x = x.transpose(0, 1).contiguous()
         assigns = x.new_full((self.nspaces, x.size(1)), fill_value=-1)
         for i in range(niter):
