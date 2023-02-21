@@ -23,7 +23,9 @@ class InvertedFile(Kmeans):
         self.metric = cfg.metric
         self.nlists = nlists
         self.storage = storage
-        self.invlists: List[torch.Tensor] = [torch.Tensor() for _ in range(nlists)]
+        self.invlists: List[torch.Tensor] = [
+            torch.Tensor().long() for _ in range(nlists)
+        ]
 
     def add(self, x: torch.Tensor) -> torch.Tensor:
         """Adds the given vectors to the inverted file.

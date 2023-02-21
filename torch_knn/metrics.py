@@ -49,6 +49,23 @@ class Metric(abc.ABC):
         """
         return cls.compute_distance(querys, keys).argmin(dim=-1)
 
+    @property
+    def farthest_value(self) -> float:
+        """Returns the farthest value under this metric."""
+        return float("inf")
+
+    def mask(self, distances: Tensor, padding_mask: Tensor) -> Tensor:
+        """Masks the distance tensor with the padding mask.
+
+        Args:
+            distances (torch.Tensor): Distance tensor of shape `(..., n, m)`.
+            padding_mask (torch.Tensor): Padding boolean mask of shape `(..., n, m)`.
+
+        Returns:
+            torch.Tensor: Masked distance tensor.
+        """
+        return distances.masked_fill_(padding_mask, self.farthest_value)
+
 
 class L2Metric(Metric):
     """L2 metric for squared Euclidean distance computation."""
@@ -110,6 +127,11 @@ class IPMetric(Metric):
             torch.Tensor: Indices of the nearest-neighbors of shape `(n,)`.
         """
         return cls.compute_distance(querys, keys).argmax(dim=-1)
+
+    @property
+    def farthest_value(self) -> float:
+        """Returns the farthest value under this metric."""
+        return float("-inf")
 
 
 class CosineMetric(IPMetric):
