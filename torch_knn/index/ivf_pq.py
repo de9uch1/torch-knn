@@ -278,9 +278,6 @@ class IVFPQIndex(LinearPQIndex):
         Returns:
             ADTable: Look up table of shape `(Nq * nprobe, M, ksub)`.
         """
-        if self.precompute_table is None:
-            raise RuntimeError("This index must be trained.")
-
         Nq, _ = centroid_distances.size()
         # term1: Nq x nprobe
         term1 = centroid_distances / self.M
