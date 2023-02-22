@@ -47,6 +47,9 @@ class IVFPQIndex(LinearPQIndex):
     @property
     def centroids(self) -> torch.Tensor:
         """Returns centroid tensor of shape `(nlists, D)`"""
+        if self.ivf.centroids is None:
+            raise RuntimeError("This index must be trained.")
+
         return self.ivf.centroids
 
     @property
@@ -81,6 +84,9 @@ class IVFPQIndex(LinearPQIndex):
         Returns:
             torch.Tensor: Precompute table of shape `(nlists, M, ksub)`.
         """
+        if self.codebook is None:
+            raise RuntimeError("This index must be trained.")
+
         # cr_table: nlists x M x ksub
         cr_table = torch.einsum(
             "nmd,mkd->nmk",
@@ -211,12 +217,14 @@ class IVFPQIndex(LinearPQIndex):
         Returns:
             ADTable: Look up table of shape `(Nq * nprobe, M, ksub)`.
         """
+        if self.codebook is None:
+            raise RuntimeError("This index must be trained.")
 
         Nq, _ = centroid_distances.size()
         # term1: Nq x nprobe
         term1 = centroid_distances / self.M
 
-        if self.cfg.precompute:
+        if self.precompute_table is not None:
             term2 = self.precompute_table[centroid_indices]
         else:
             # cr_table: (Nq * nprobe) x M x ksub
@@ -270,6 +278,8 @@ class IVFPQIndex(LinearPQIndex):
         Returns:
             ADTable: Look up table of shape `(Nq * nprobe, M, ksub)`.
         """
+        if self.precompute_table is None:
+            raise RuntimeError("This index must be trained.")
 
         Nq, _ = centroid_distances.size()
         # term1: Nq x nprobe

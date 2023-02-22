@@ -1,7 +1,9 @@
+from enum import Enum
+from typing import Optional
+
 import torch
 from torch import Tensor
 
-from torch_knn.constants import CentroidsInit
 from torch_knn.metrics import L2Metric, Metric
 
 
@@ -15,24 +17,28 @@ class Kmeans:
         init (CentroidsInit): Initialization method of the centroids.
     """
 
+    class Init(Enum):
+        RANDOM = "random"
+        KMEANSPP = "kmeanspp"
+
     def __init__(
         self,
         ncentroids: int,
         dim: int,
         metric: Metric = L2Metric(),
-        init: CentroidsInit = CentroidsInit.RANDOM,
+        init: Init = Init.RANDOM,
     ) -> None:
         self.ncentroids = ncentroids
         self.dim = dim
         self.metric = metric
         self.init = init
-        self.centroids = None
+        self.centroids: Optional[Tensor] = None
 
-    def init_centroids(self, init: CentroidsInit) -> Tensor:
+    def init_centroids(self, init: Init) -> Tensor:
         """Initializes cluster centorids.
 
         Args:
-            init (CentroidsInit): Initialization method.
+            init (Init): Initialization method.
 
         Returns:
             Tensor: A centroids tensor.
@@ -40,7 +46,7 @@ class Kmeans:
         Raises:
             NotImplementedError: When the given method is not implemented.
         """
-        if init == CentroidsInit.RANDOM:
+        if init == self.Init.RANDOM:
             return torch.rand(self.ncentroids, self.dim)
         else:
             raise NotImplementedError
@@ -54,6 +60,9 @@ class Kmeans:
         Returns:
             torch.Tensor: Assigned IDs of shape `(n,)`.
         """
+        if self.centroids is None:
+            raise RuntimeError("Centroids must be trained before calling assign().")
+
         return self.metric.assign(x, self.centroids)
 
     def update(self, x: Tensor, assigns: Tensor) -> Tensor:
@@ -66,6 +75,9 @@ class Kmeans:
         Returns:
             torch.Tensor: New centroid vectors of shape `(ncentroids, dim)`.
         """
+        if self.centroids is None:
+            raise RuntimeError("Centroids must be trained before calling update().")
+
         new_centroids = self.centroids
         for k in range(self.ncentroids):
             if (assigns == k).any():
@@ -110,7 +122,7 @@ class ParallelKmeans(Kmeans):
         dim (int): The dimension size of centroids.
         nspaces (int): The number of subspaces.
         metric (Type[Metric]): Distance metric function.
-        init (CentroidsInit): Initialization method of the centroids.
+        init (Init): Initialization method of the centroids.
     """
 
     def __init__(
@@ -119,16 +131,16 @@ class ParallelKmeans(Kmeans):
         dim: int,
         nspaces: int,
         metric: Metric = L2Metric(),
-        init: CentroidsInit = CentroidsInit.RANDOM,
+        init: Kmeans.Init = Kmeans.Init.RANDOM,
     ) -> None:
         self.nspaces = nspaces
         super().__init__(ncentroids, dim, metric=metric, init=init)
 
-    def init_centroids(self, init: CentroidsInit) -> Tensor:
+    def init_centroids(self, init: Kmeans.Init) -> Tensor:
         """Initializes cluster centorids.
 
         Args:
-            init (CentroidsInit): Initialization method.
+            init (Init): Initialization method.
 
         Returns:
             Tensor: A centroids tensor.
@@ -136,7 +148,7 @@ class ParallelKmeans(Kmeans):
         Raises:
             NotImplementedError: When the given method is not implemented.
         """
-        if init == CentroidsInit.RANDOM:
+        if init == self.Init.RANDOM:
             return torch.rand(self.nspaces, self.ncentroids, self.dim)
         else:
             raise NotImplementedError
@@ -150,6 +162,9 @@ class ParallelKmeans(Kmeans):
         Returns:
             torch.Tensor: Assigned IDs of shape `(nspaces, n)`.
         """
+        if self.centroids is None:
+            raise RuntimeError("Centroids must be trained before calling assign().")
+
         return self.metric.assign(x, self.centroids)
 
     def update(self, x: Tensor, assigns: Tensor) -> Tensor:
@@ -162,6 +177,9 @@ class ParallelKmeans(Kmeans):
         Returns:
             torch.Tensor: New centroid vectors of shape `(nspaces, ncentroids, dim)`.
         """
+        if self.centroids is None:
+            raise RuntimeError("Centroids must be trained before calling update().")
+
         new_centroids = self.centroids
         dtype = x.dtype
         x = x.float()

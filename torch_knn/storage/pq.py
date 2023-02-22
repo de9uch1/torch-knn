@@ -21,7 +21,7 @@ class PQStorage(Storage):
 
     def __init__(self, cfg: "PQStorage.Config"):
         super().__init__(cfg)
-        self._codebook = None
+        self._codebook: Optional[torch.Tensor] = None
 
     @dataclass
     class Config(Storage.Config):
@@ -83,7 +83,7 @@ class PQStorage(Storage):
         Returns:
             torch.Tensor: Encoded vectors of shape `(N, M)`.
         """
-        if not self.is_trained:
+        if self.codebook is None:
             raise RuntimeError("The storage must be trained.")
 
         if x.dim() != 2 or x.size(-1) != self.D:
@@ -106,6 +106,9 @@ class PQStorage(Storage):
         Returns:
             torch.Tensor: Decoded vectors of shape `(N, D)`.
         """
+        if self.codebook is None:
+            raise RuntimeError("The storage must be trained.")
+
         if codes.dim() != 2 or codes.size(-1) != self.M:
             raise RuntimeError("The input codes must have `(N, M)` dimensions.")
 
@@ -204,6 +207,9 @@ class PQStorage(Storage):
         Returns:
             ADTable: Asymmetric distance table of shape `(Nq, M, ksub)`.
         """
+        if self.codebook is None:
+            raise RuntimeError("The storage must be trained.")
+
         Nq, D = query.size()
         # query: Nq x M x dsub -> M x Nq x dsub
         query = query.view(Nq, self.M, self.dsub).transpose(0, 1).contiguous()

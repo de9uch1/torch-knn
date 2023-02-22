@@ -80,6 +80,9 @@ class IVFFlatIndex(FlatStorage):
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
+        if self.ivf.centroids is None:
+            raise RuntimeError("This index must be trained.")
+
         query = self.transform(query)
         nprobe = min(max(nprobe, 1), self.cfg.nlists)
         coarse_distances = self.metric.compute_distance(query, self.ivf.centroids)

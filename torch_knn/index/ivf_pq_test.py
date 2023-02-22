@@ -45,10 +45,12 @@ class TestIVFPQIndex:
         )
         x = torch.rand(N, D)
         index.train(x)
+        assert index.ivf.centroids is not None
         assert index.N == 0
         index.add(x)
         assert index.N == N
         assert torch.cat(index.ivf.invlists).size(0) == N
+
         if residual:
             x = x - index.ivf.centroids[index.ivf.assign(x)]
         codes = index.encode(x)
