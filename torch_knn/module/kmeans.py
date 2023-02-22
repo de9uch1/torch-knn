@@ -1,5 +1,6 @@
 import torch
 from torch import Tensor
+
 from torch_knn.constants import CentroidsInit
 from torch_knn.metrics import L2Metric, Metric
 
@@ -67,7 +68,8 @@ class Kmeans:
         """
         new_centroids = self.centroids
         for k in range(self.ncentroids):
-            new_centroids[k] = x[assigns == k].mean(dim=0)
+            if (assigns == k).any():
+                new_centroids[k] = x[assigns == k].mean(dim=0)
         return new_centroids
 
     @property
@@ -165,9 +167,11 @@ class ParallelKmeans(Kmeans):
         x = x.float()
         for k in range(self.ncentroids):
             # nspaces x n
-            k_mask = assigns.eq(k).unsqueeze(-1).float()
-            new_centroids[:, k] = (
-                x * k_mask / (k_mask.sum(dim=1, keepdim=True) + 1e-9)
+            is_assigned = assigns.eq(k)
+            update_mask = is_assigned.any(dim=-1)
+            mean_mask = is_assigned[update_mask].unsqueeze(-1).float()
+            new_centroids[update_mask, k] = (
+                x[update_mask] * mean_mask / (mean_mask.sum(dim=1, keepdim=True))
             ).sum(1)
         return new_centroids.to(dtype)
 

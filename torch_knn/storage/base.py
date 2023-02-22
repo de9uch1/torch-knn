@@ -2,9 +2,9 @@ import abc
 from dataclasses import dataclass
 from typing import Set
 
-from torch_knn.metrics import L2Metric, Metric
-
 import torch
+
+from torch_knn.metrics import CosineMetric, L2Metric, Metric
 
 
 class Storage(abc.ABC):
@@ -21,6 +21,7 @@ class Storage(abc.ABC):
         self.dtype = cfg.dtype
         self.metric = cfg.metric
         self._data = torch.Tensor()
+        self.pre_transforms = []
 
     @dataclass
     class Config:
@@ -75,6 +76,22 @@ class Storage(abc.ABC):
     def shape(self) -> torch.Size:
         """Returns the shape of the storage tensor."""
         return self.data.shape
+
+    def transform(self, x: torch.Tensor) -> torch.Tensor:
+        """Pre-transforms the given vectors.
+
+        Args:
+            x (torch.Tensor): The input vectors of shape `(N, Din)`.
+
+        Returns:
+            torch.Tensor: Transformed vectors of shape `(N, D)`.
+        """
+        if isinstance(self.metric, CosineMetric):
+            x /= x.norm(dim=-1, keepdim=True)
+
+        for t in self.pre_transforms:
+            x = t(x)
+        return x
 
     @abc.abstractmethod
     def encode(self, x: torch.Tensor) -> torch.Tensor:

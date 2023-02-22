@@ -2,6 +2,7 @@ from contextlib import nullcontext as does_not_raise
 
 import pytest
 import torch
+
 from torch_knn import utils
 from torch_knn.module.kmeans import ParallelKmeans
 from torch_knn.storage.pq import PQStorage

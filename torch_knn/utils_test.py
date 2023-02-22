@@ -39,5 +39,5 @@ def test_pad():
     tensors = [torch.arange(i + L) for i in range(N)]
     expected = torch.zeros(N, L + N - 1, dtype=torch.long).fill_(padding_idx)
     for i, t in enumerate(tensors):
-        expected[i, :len(t)] = t
+        expected[i, : len(t)] = t
     assert torch.equal(utils.pad(tensors, padding_idx), expected)

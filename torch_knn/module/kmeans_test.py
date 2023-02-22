@@ -1,5 +1,6 @@
 import pytest
 import torch
+
 from torch_knn import utils
 from torch_knn.constants import CentroidsInit
 from torch_knn.metrics import CosineMetric, IPMetric, L2Metric

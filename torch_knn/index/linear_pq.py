@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import torch
+
 from torch_knn.storage.pq import PQStorage
 
 
@@ -11,10 +12,28 @@ class LinearPQIndex(PQStorage):
         cfg (LinearPQIndex.Config): Configuration for this class.
     """
 
+    def add(self, x: torch.Tensor) -> None:
+        """Adds the given vectors to the index.
+
+        Args:
+            x (torch.Tensor): The input vectors of shape `(N, D)`.
+        """
+        x = self.transform(x)
+        super().add(x)
+
+    def train(self, x: torch.Tensor) -> "PQStorage":
+        """Trains the index with the given vectors.
+
+        Args:
+            x (torch.Tensor): The input vectors of shape `(N, D)`.
+
+        Returns:
+            LinearPQIndex: The trained index object.
+        """
+        return super().train(self.transform(x))
+
     def search(
-        self,
-        query: torch.Tensor,
-        k: int = 1,
+        self, query: torch.Tensor, k: int = 1, **kwargs
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Searches the k-nearest-neighbor vectors.
 
@@ -27,23 +46,7 @@ class LinearPQIndex(PQStorage):
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
-        Nq, D = query.size()
-        query = query.view(Nq, self.M, self.dsub).transpose(0, 1).contiguous()
-        # adtable: Nq x M x ksub -> Nq x N x M x ksub
-        # data: N x M -> Nq x N x M x 1
-        # Note the Tensor.expand() does not allocate new memory.
-        adtable = (
-            self.metric.compute_distance(query, self.codebook)
-            .transpose(0, 1)
-            .contiguous()[:, None]
-            .expand(Nq, self.N, self.M, self.ksub)
-        )
-        distances = (
-            adtable.gather(
-                dim=-1,
-                index=self.data.long()[None, :, :, None].expand(Nq, self.N, self.M, 1),
-            )
-            .squeeze(-1)
-            .sum(dim=-1)
-        )
+        query = self.transform(query)
+        adtable = self.compute_adtable(query)
+        distances = adtable.lookup(self.data)
         return self.metric.topk(distances, k=k)

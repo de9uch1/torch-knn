@@ -1,4 +1,5 @@
 import torch
+
 from torch_knn.module.ivf import InvertedFile
 from torch_knn.storage.flat import FlatStorage
 

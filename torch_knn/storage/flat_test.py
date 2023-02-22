@@ -2,6 +2,7 @@ from contextlib import nullcontext as does_not_raise
 
 import pytest
 import torch
+
 from torch_knn.storage.flat import FlatStorage
 
 D = 8

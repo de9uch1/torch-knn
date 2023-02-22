@@ -1,8 +1,7 @@
-from typing import Tuple
-
 import pytest
 import torch
-from torch_knn import utils
+
+from torch_knn import metrics, utils
 from torch_knn.index.ivf_flat import IVFFlatIndex
 from torch_knn.module.ivf import InvertedFile
 
@@ -12,12 +11,6 @@ N = 100
 
 
 class TestIVFFlatIndex:
-    """Inverted file index class.
-
-    Args:
-        cfg (IVFIndex.Config): Configuration for this class.
-    """
-
     def test___init__(self):
         index = IVFFlatIndex(IVFFlatIndex.Config(D, nlists=NLISTS))
         assert isinstance(index.ivf, InvertedFile)
@@ -39,17 +32,6 @@ class TestIVFFlatIndex:
             index.ivf.centroids, [NLISTS, D]
         )
 
-    @property
-    def test_nprobe(self):
-        index = IVFFlatIndex(IVFFlatIndex.Config(D, nlists=NLISTS))
-        assert index.nprobe == 1
-        index.nprobe = 16
-        assert index.nprobe == 16
-        index.nprobe = 0
-        assert index.nprobe == 1
-        index.nprobe = -1
-        assert index.nprobe == 1
-
     def test_add(self):
         index = IVFFlatIndex(IVFFlatIndex.Config(D, nlists=NLISTS))
         x = torch.rand(N, D)
@@ -62,16 +44,22 @@ class TestIVFFlatIndex:
         index.add(x)
         assert index.N == 2 * N
 
+    @pytest.mark.parametrize("metric", [metrics.L2Metric(), metrics.CosineMetric()])
+    @pytest.mark.parametrize("nprobe", [1, 3])
     @pytest.mark.parametrize("k", [1, 4])
-    def test_search(self, k: int):
+    def test_search(self, metric: metrics.Metric, k: int, nprobe: int):
         torch.manual_seed(0)
-        index = IVFFlatIndex(IVFFlatIndex.Config(D, nlists=NLISTS))
+        index = IVFFlatIndex(IVFFlatIndex.Config(D, metric=metric, nlists=NLISTS))
         x = torch.rand(N, D)
         index.train(x)
         index.add(x)
-        dists, idxs = index.search(x, k=k)
+        dists, idxs = index.search(x, k=k, nprobe=nprobe)
         assert utils.is_equal_shape(dists, idxs)
         assert utils.is_equal_shape(dists, [N, k])
-        torch.testing.assert_close(dists[:, 0], torch.zeros(dists[:, 0].shape))
-        torch.testing.assert_close(idxs[:, 0], torch.arange(N))
+        if isinstance(metric, metrics.CosineMetric):
+            torch.testing.assert_close(dists[:, 0], torch.ones(dists[:, 0].shape))
+        else:
+            torch.testing.assert_close(dists[:, 0], torch.zeros(dists[:, 0].shape))
 
+        if isinstance(metric, metrics.L2Metric):
+            torch.testing.assert_close(idxs[:, 0], torch.arange(N))
