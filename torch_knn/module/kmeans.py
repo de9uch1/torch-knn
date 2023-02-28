@@ -4,6 +4,7 @@ from typing import Optional
 import torch
 from torch import Tensor
 
+from torch_knn import utils
 from torch_knn.metrics import L2Metric, Metric
 
 
@@ -32,7 +33,29 @@ class Kmeans:
         self.dim = dim
         self.metric = metric
         self.init = init
-        self.centroids: Optional[Tensor] = None
+        self._centroids: Optional[Tensor] = None
+
+    @property
+    def centroids(self) -> Tensor:
+        """Returns centroids tensor of shape `(ncentroids, dim)`."""
+        if self._centroids is None:
+            raise RuntimeError("Centroids are not trained.")
+        return self._centroids
+
+    @centroids.setter
+    def centroids(self, centroids: Tensor) -> None:
+        """Sets the given tensor as the centroids.
+
+        Args:
+            centroids (Tensor): Centroids tensor of shape `(ncentroids, dim)`.
+        """
+        if centroids.dim() != 2 or not utils.is_equal_shape(
+            centroids, [self.ncentroids, self.dim]
+        ):
+            raise ValueError(
+                "Centroids tensor must be the shape of `(ncentroids, dim)`."
+            )
+        self._centroids = centroids
 
     def init_centroids(self, init: Init) -> Tensor:
         """Initializes cluster centorids.
@@ -60,9 +83,6 @@ class Kmeans:
         Returns:
             torch.Tensor: Assigned IDs of shape `(n,)`.
         """
-        if self.centroids is None:
-            raise RuntimeError("Centroids must be trained before calling assign().")
-
         return self.metric.assign(x, self.centroids)
 
     def update(self, x: Tensor, assigns: Tensor) -> Tensor:
@@ -75,9 +95,6 @@ class Kmeans:
         Returns:
             torch.Tensor: New centroid vectors of shape `(ncentroids, dim)`.
         """
-        if self.centroids is None:
-            raise RuntimeError("Centroids must be trained before calling update().")
-
         new_centroids = self.centroids
         for k in range(self.ncentroids):
             if (assigns == k).any():
@@ -87,7 +104,7 @@ class Kmeans:
     @property
     def is_trained(self) -> bool:
         """Returns whether the centroids are trained or not."""
-        return self.centroids is not None
+        return self._centroids is not None
 
     def train(self, x: Tensor, niter: int = 10) -> Tensor:
         """Trains k-means.
@@ -136,6 +153,28 @@ class ParallelKmeans(Kmeans):
         self.nspaces = nspaces
         super().__init__(ncentroids, dim, metric=metric, init=init)
 
+    @property
+    def centroids(self) -> Tensor:
+        """Returns centroids tensor of shape `(nspaces, ncentroids, dim)`."""
+        if self._centroids is None:
+            raise RuntimeError("Centroids are not trained.")
+        return self._centroids
+
+    @centroids.setter
+    def centroids(self, centroids: Tensor) -> None:
+        """Sets the given tensor as the centroids.
+
+        Args:
+            centroids (Tensor): Centroids tensor of shape `(nspaces, ncentroids, dim)`.
+        """
+        if centroids.dim() != 3 or not utils.is_equal_shape(
+            centroids, [self.nspaces, self.ncentroids, self.dim]
+        ):
+            raise ValueError(
+                "Centroids tensor must be the shape of `(nspaces, ncentroids, dim)`."
+            )
+        self._centroids = centroids
+
     def init_centroids(self, init: Kmeans.Init) -> Tensor:
         """Initializes cluster centorids.
 
@@ -162,9 +201,6 @@ class ParallelKmeans(Kmeans):
         Returns:
             torch.Tensor: Assigned IDs of shape `(nspaces, n)`.
         """
-        if self.centroids is None:
-            raise RuntimeError("Centroids must be trained before calling assign().")
-
         return self.metric.assign(x, self.centroids)
 
     def update(self, x: Tensor, assigns: Tensor) -> Tensor:
@@ -177,9 +213,6 @@ class ParallelKmeans(Kmeans):
         Returns:
             torch.Tensor: New centroid vectors of shape `(nspaces, ncentroids, dim)`.
         """
-        if self.centroids is None:
-            raise RuntimeError("Centroids must be trained before calling update().")
-
         new_centroids = self.centroids
         dtype = x.dtype
         x = x.float()

@@ -37,9 +37,6 @@ class IVFFlatIndex(FlatStorage):
     @property
     def centroids(self) -> torch.Tensor:
         """Returns centroid tensor of shape `(nlists, D)`"""
-        if self.ivf.centroids is None:
-            raise RuntimeError("This index must be trained.")
-
         return self.ivf.centroids
 
     @property
@@ -102,11 +99,15 @@ class IVFFlatIndex(FlatStorage):
             query[:, None], self.data[key_indices]
         ).squeeze(1)
         distances = self.metric.mask(distances, key_indices.eq(-1))
-        k_cand_distances, k_cand_probed_indices = self.metric.topk(distances, k=min(k, Nk))
+        k_cand_distances, k_cand_probed_indices = self.metric.topk(
+            distances, k=min(k, Nk)
+        )
         k_cand_indices = key_indices.gather(-1, k_cand_probed_indices)
 
-        k_distances = k_cand_distances.new_full((Nq, k), fill_value=self.metric.farthest_value)
+        k_distances = k_cand_distances.new_full(
+            (Nq, k), fill_value=self.metric.farthest_value
+        )
         k_indices = k_cand_indices.new_full((Nq, k), fill_value=-1)
-        k_distances[:, :min(k, Nk)] = k_cand_distances
-        k_indices[:, :min(k, Nk)] = k_cand_indices
+        k_distances[:, : min(k, Nk)] = k_cand_distances
+        k_indices[:, : min(k, Nk)] = k_cand_indices
         return k_distances, k_indices

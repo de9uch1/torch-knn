@@ -21,6 +21,22 @@ class TestKmeans:
         assert kmeans.metric == metric
         assert kmeans.init == init
 
+    def test_centroids(self):
+        kmeans = Kmeans(C, D)
+        with pytest.raises(RuntimeError):
+            kmeans.centroids
+        x = torch.rand(N, D)
+        kmeans.train(x)
+        assert utils.is_equal_shape(kmeans.centroids, [C, D])
+
+        kmeans = Kmeans(C, D)
+        x = torch.rand(N, D)
+        with pytest.raises(ValueError):
+            kmeans.centroids = x
+        x = torch.rand(C, D)
+        kmeans.centroids = x
+        assert torch.equal(kmeans.centroids, x)
+
     @pytest.mark.parametrize("init", list(Kmeans.Init))
     def test_init_centroids(self, init):
         kmeans = Kmeans(C, D, init=init)
@@ -85,6 +101,23 @@ class TestParallelKmeans:
         assert kmeans.metric == metric
         assert kmeans.init == init
 
+    def test_centroids(self):
+        kmeans = ParallelKmeans(C, D, M)
+        with pytest.raises(RuntimeError):
+            kmeans.centroids
+        x = torch.rand(N, M, D)
+        kmeans.train(x)
+        assert utils.is_equal_shape(kmeans.centroids, [M, C, D])
+
+        kmeans = ParallelKmeans(C, D, M)
+        x = torch.rand(M, N, D)
+        with pytest.raises(ValueError):
+            kmeans.centroids = x
+
+        x = torch.rand(M, C, D)
+        kmeans.centroids = x
+        assert torch.equal(kmeans.centroids, x)
+
     @pytest.mark.parametrize("init", list(ParallelKmeans.Init))
     def test_init_centroids(self, init):
         kmeans = ParallelKmeans(C, D, M, init=init)
@@ -96,7 +129,7 @@ class TestParallelKmeans:
 
     def test_assign(self):
         x = torch.rand(M, N, D)
-        centroids = torch.rand(C, D)
+        centroids = torch.rand(M, C, D)
         kmeans = ParallelKmeans(C, D, M)
         kmeans.centroids = centroids
         assigns = kmeans.assign(x)
