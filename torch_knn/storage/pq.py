@@ -3,6 +3,7 @@ from typing import Optional
 
 import torch
 
+from torch_knn import utils
 from torch_knn.metrics import L2Metric
 from torch_knn.module.kmeans import ParallelKmeans
 from torch_knn.storage.base import Storage
@@ -64,9 +65,18 @@ class PQStorage(Storage):
         return self.cfg.ksub
 
     @property
-    def codebook(self) -> Optional[torch.Tensor]:
+    def codebook(self) -> torch.Tensor:
         """PQ codebook of shape `(M, ksub, dsub)`."""
+        if self._codebook is None:
+            raise RuntimeError("The storage must be trained.")
         return self._codebook
+
+    @codebook.setter
+    def codebook(self, codebook) -> None:
+        """Sets PQ codebook of shape `(M, ksub, dsub)`."""
+        if not utils.is_equal_shape(codebook, [self.M, self.ksub, self.dsub]):
+            raise ValueError("The codebook must be the shape of `(M, ksub, dsub)`.")
+        self._codebook = codebook
 
     @property
     def data(self) -> torch.Tensor:
@@ -84,9 +94,6 @@ class PQStorage(Storage):
         Returns:
             torch.Tensor: Encoded vectors of shape `(N, M)`.
         """
-        if self.codebook is None:
-            raise RuntimeError("The storage must be trained.")
-
         N, D = x.size()
         # x: N x D -> M x N x dsub
         x = x.view(N, self.M, self.dsub).transpose(0, 1).contiguous()
@@ -104,9 +111,6 @@ class PQStorage(Storage):
         Returns:
             torch.Tensor: Decoded vectors of shape `(N, D)`.
         """
-        if self.codebook is None:
-            raise RuntimeError("The storage must be trained.")
-
         if codes.dim() != 2 or codes.size(-1) != self.M:
             raise RuntimeError("The input codes must have `(N, M)` dimensions.")
 
@@ -121,7 +125,7 @@ class PQStorage(Storage):
     @property
     def is_trained(self) -> bool:
         """Returns whether the storage is trained or not."""
-        return self.codebook is not None
+        return self._codebook is not None
 
     def train(self, x: torch.Tensor) -> "PQStorage":
         """Trains the index with the given vectors.
@@ -202,9 +206,6 @@ class PQStorage(Storage):
         Returns:
             ADTable: Asymmetric distance table of shape `(Nq, M, ksub)`.
         """
-        if self.codebook is None:
-            raise RuntimeError("The storage must be trained.")
-
         Nq, D = query.size()
         # query: Nq x M x dsub -> M x Nq x dsub
         query = query.view(Nq, self.M, self.dsub).transpose(0, 1).contiguous()

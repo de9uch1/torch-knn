@@ -37,6 +37,23 @@ class TestPQStorage:
         storage = PQStorage(PQStorage.Config(D, M=M, ksub=ksub))
         assert storage.ksub == ksub
 
+    def test_codebook(self):
+        storage = PQStorage(PQStorage.Config(D, M=M, ksub=ksub))
+        with pytest.raises(RuntimeError):
+            storage.codebook
+        x = torch.rand(N, D)
+        storage.train(x)
+        assert utils.is_equal_shape(storage.codebook, [M, ksub, dsub])
+
+        storage = PQStorage(PQStorage.Config(D, M=M, ksub=ksub))
+        x = torch.rand(M, N, D)
+        with pytest.raises(ValueError):
+            storage.codebook = x
+
+        x = torch.rand(M, ksub, dsub)
+        storage.codebook = x
+        assert torch.equal(storage.codebook, x)
+
     def test_encode(self):
         cfg = PQStorage.Config(D, M=M, ksub=ksub)
         x = torch.rand(N, D)

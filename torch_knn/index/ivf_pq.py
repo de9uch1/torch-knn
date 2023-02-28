@@ -81,9 +81,6 @@ class IVFPQIndex(LinearPQIndex):
         Returns:
             torch.Tensor, optional: Precompute table of shape `(nlists, M, ksub)`.
         """
-        if self.codebook is None:
-            raise RuntimeError("This index must be trained.")
-
         if not isinstance(self.metric, metrics.L2Metric):
             self.precompute_table = None
             return self.precompute_table
@@ -207,9 +204,6 @@ class IVFPQIndex(LinearPQIndex):
         Returns:
             ADTable: Look up table of shape `(Nq * nprobe, M, ksub)`.
         """
-        if self.codebook is None:
-            raise RuntimeError("This index must be trained.")
-
         Nq, _ = centroid_distances.size()
         # term1: Nq x nprobe
         term1 = centroid_distances / self.M
