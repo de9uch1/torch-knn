@@ -54,51 +54,6 @@ class IVFPQIndex(LinearPQIndex):
         """Returns whether the index is trained or not."""
         return super().is_trained and self.ivf.is_trained
 
-    def train(self, x: torch.Tensor) -> "IVFPQIndex":
-        """Trains the index with the given vectors.
-
-        Args:
-            x (torch.Tensor): The input vectors of shape `(N, D)`.
-
-        Returns:
-            IVFFlatIndex: The trained index object.
-        """
-        x = self.transform(x)
-        self.ivf.train(x)
-        if self.cfg.residual:
-            assigns = self.ivf.assign(x)
-            pq_training_vectors = x - self.centroids[assigns]
-        else:
-            pq_training_vectors = x
-        super().train(pq_training_vectors)
-        if self.cfg.precompute and isinstance(self.metric, metrics.L2Metric):
-            self.build_precompute_table()
-        return self
-
-    def build_precompute_table(self) -> Optional[torch.Tensor]:
-        """Builds precompute table for faster L2 search.
-
-        Returns:
-            torch.Tensor, optional: Precompute table of shape `(nlists, M, ksub)`.
-        """
-        if not isinstance(self.metric, metrics.L2Metric):
-            self.precompute_table = None
-            return self.precompute_table
-
-        # cr_table: nlists x M x ksub
-        cr_table = torch.einsum(
-            "nmd,mkd->nmk",
-            self.centroids.view(self.cfg.nlists, self.M, self.dsub),
-            self.codebook,
-        )
-        # r_sqnorms: M x ksub
-        r_sqnorms = self.codebook.norm(dim=-1) ** 2
-        # term2: nlists x M x ksub
-        term2 = 2 * cr_table + r_sqnorms[None, :]
-
-        self.precompute_table = term2
-        return term2
-
     def compute_residual(self, x: torch.Tensor) -> torch.Tensor:
         """Computes residual vectors from the assigned centorids.
 
@@ -115,6 +70,52 @@ class IVFPQIndex(LinearPQIndex):
         assigns = self.ivf.assign(x)
         return x - self.centroids[assigns]
 
+    def train(self, x: torch.Tensor) -> "IVFPQIndex":
+        """Trains the index with the given vectors.
+
+        Args:
+            x (torch.Tensor): The input vectors of shape `(N, D)`.
+
+        Returns:
+            IVFFlatIndex: The trained index object.
+        """
+        x = self.transform(x)
+        self.ivf.train(x)
+        pq_training_vectors = self.compute_residual(x)
+        super().train(pq_training_vectors)
+        if (
+            self.cfg.precompute
+            and self.cfg.residual
+            and isinstance(self.metric, metrics.L2Metric)
+        ):
+            self.build_precompute_table()
+        return self
+
+    def build_precompute_table(self) -> Optional[torch.Tensor]:
+        """Builds precompute table for faster L2 search.
+
+        Returns:
+            torch.Tensor, optional: Precompute table of shape `(nlists, M, ksub)`.
+        """
+        if not isinstance(self.metric, metrics.L2Metric):
+            return
+        if not self.cfg.residual:
+            return
+
+        # cr_table: nlists x M x ksub
+        cr_table = torch.einsum(
+            "nmd,mkd->nmk",
+            self.centroids.view(self.cfg.nlists, self.M, self.dsub),
+            self.codebook,
+        )
+        # r_sqnorms: M x ksub
+        r_sqnorms = self.codebook.norm(dim=-1) ** 2
+        # term2: nlists x M x ksub
+        term2 = 2 * cr_table + r_sqnorms[None, :]
+
+        self.precompute_table = term2
+        return term2
+
     def add(self, x: torch.Tensor) -> None:
         """Adds the given vectors to the storage.
 
@@ -123,9 +124,7 @@ class IVFPQIndex(LinearPQIndex):
         """
         x = self.transform(x)
         self.ivf.add(x)
-        if self.cfg.residual:
-            assigns = self.ivf.assign(x)
-            x = x - self.centroids[assigns]
+        x = self.compute_residual(x)
         super().add(x)
 
     def search_preassigned_noresidual(
