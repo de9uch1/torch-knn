@@ -83,11 +83,7 @@ class IVFPQIndex(LinearPQIndex):
         self.ivf.train(x)
         pq_training_vectors = self.compute_residual(x)
         super().train(pq_training_vectors)
-        if (
-            self.cfg.precompute
-            and self.cfg.residual
-            and isinstance(self.metric, metrics.L2Metric)
-        ):
+        if self.cfg.precompute:
             self.build_precompute_table()
         return self
 
@@ -97,10 +93,8 @@ class IVFPQIndex(LinearPQIndex):
         Returns:
             torch.Tensor, optional: Precompute table of shape `(nlists, M, ksub)`.
         """
-        if not isinstance(self.metric, metrics.L2Metric):
-            return
-        if not self.cfg.residual:
-            return
+        if not self.cfg.residual or not isinstance(self.metric, metrics.L2Metric):
+            return None
 
         # cr_table: nlists x M x ksub
         cr_table = torch.einsum(
