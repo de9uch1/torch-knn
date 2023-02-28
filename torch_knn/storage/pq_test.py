@@ -123,6 +123,16 @@ class TestPQStorage:
         def test_lookup(self):
             x = torch.rand(N, M, ksub)
             adtable = PQStorage.ADTable(x)
+
+            wrong_shape_codes = torch.randint(ksub, size=(N,), dtype=torch.uint8)
+            with pytest.raises(ValueError):
+                adtable.lookup(wrong_shape_codes)
+            wrong_shape_codes = torch.randint(
+                ksub, size=(N + 1, N, M), dtype=torch.uint8
+            )
+            with pytest.raises(ValueError):
+                adtable.lookup(wrong_shape_codes)
+
             codes = torch.randint(ksub, size=(N, M), dtype=torch.uint8)
             adists = adtable.lookup(codes)
             assert utils.is_equal_shape(adists, [N, N])
