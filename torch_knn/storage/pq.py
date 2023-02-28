@@ -21,6 +21,7 @@ class PQStorage(Storage):
 
     def __init__(self, cfg: "PQStorage.Config"):
         super().__init__(cfg)
+        self._data = self.data.to(cfg.code_dtype)
         self._codebook: Optional[torch.Tensor] = None
 
     @dataclass
@@ -86,9 +87,6 @@ class PQStorage(Storage):
         if self.codebook is None:
             raise RuntimeError("The storage must be trained.")
 
-        if x.dim() != 2 or x.size(-1) != self.D:
-            raise RuntimeError("The input vectors must have `(N, D)` dimensions.")
-
         N, D = x.size()
         # x: N x D -> M x N x dsub
         x = x.view(N, self.M, self.dsub).transpose(0, 1).contiguous()
@@ -134,9 +132,6 @@ class PQStorage(Storage):
         Returns:
             PQStorage: The trained storage object.
         """
-        if x.dim() != 2 or x.size(-1) != self.D:
-            raise RuntimeError("The input vectors must have `(N, D)` dimensions.")
-
         kmeans = ParallelKmeans(self.ksub, self.dsub, self.M)
         self._codebook = kmeans.train(
             x.view(x.size(0), self.M, self.dsub), self.cfg.train_niter

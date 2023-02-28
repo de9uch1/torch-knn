@@ -87,7 +87,7 @@ class Storage(abc.ABC):
             torch.Tensor: Transformed vectors of shape `(N, D)`.
         """
         if isinstance(self.metric, CosineMetric):
-            x /= x.norm(dim=-1, keepdim=True)
+            x = x / x.norm(dim=-1, keepdim=True)
 
         for t in self.pre_transforms:
             x = t(x)

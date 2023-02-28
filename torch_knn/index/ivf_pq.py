@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Optional, Tuple
 
 import torch
 
@@ -78,14 +78,18 @@ class IVFPQIndex(LinearPQIndex):
             self.build_precompute_table()
         return self
 
-    def build_precompute_table(self) -> torch.Tensor:
+    def build_precompute_table(self) -> Optional[torch.Tensor]:
         """Builds precompute table for faster L2 search.
 
         Returns:
-            torch.Tensor: Precompute table of shape `(nlists, M, ksub)`.
+            torch.Tensor, optional: Precompute table of shape `(nlists, M, ksub)`.
         """
         if self.codebook is None:
             raise RuntimeError("This index must be trained.")
+
+        if not isinstance(self.metric, metrics.L2Metric):
+            self.precompute_table = None
+            return self.precompute_table
 
         # cr_table: nlists x M x ksub
         cr_table = torch.einsum(
@@ -158,32 +162,17 @@ class IVFPQIndex(LinearPQIndex):
             for cents in centroid_indices.cpu()
         ]
         key_indices = utils.pad(keys, -1)
+        Nq, Nk = key_indices.size()
         adtable = self.compute_adtable(query)
         distances = adtable.lookup(self.data[key_indices])
         distances = self.metric.mask(distances, key_indices.eq(-1))
-        if distances.size(1) < k:
-            distances = torch.cat(
-                [
-                    distances,
-                    distances.new_full(
-                        (distances.size(0), k - distances.size(1)),
-                        fill_value=self.metric.farthest_value,
-                    ),
-                ],
-                dim=1,
-            )
-            key_indices = torch.cat(
-                [
-                    key_indices,
-                    key_indices.new_full(
-                        (key_indices.size(0), k - key_indices.size(1)),
-                        fill_value=-1,
-                    ),
-                ],
-                dim=1,
-            )
-        k_distances, k_probed_indices = self.metric.topk(distances, k=k)
-        k_indices = key_indices.gather(-1, k_probed_indices)
+        k_cand_distances, k_cand_probed_indices = self.metric.topk(distances, k=min(k, Nk))
+        k_cand_indices = key_indices.gather(-1, k_cand_probed_indices)
+
+        k_distances = k_cand_distances.new_full((Nq, k), fill_value=self.metric.farthest_value)
+        k_indices = k_cand_indices.new_full((Nq, k), fill_value=-1)
+        k_distances[:, :min(k, Nk)] = k_cand_distances
+        k_indices[:, :min(k, Nk)] = k_cand_indices
         return k_distances, k_indices
 
     def compute_residual_adtable_L2(
@@ -375,6 +364,7 @@ class IVFPQIndex(LinearPQIndex):
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
         query = self.transform(query)
+        nprobe = min(max(nprobe, 1), self.cfg.nlists)
         # 1st stage search
         coarse_distances = self.metric.compute_distance(query, self.centroids)
         centroid_distances, centroid_indices = self.metric.topk(

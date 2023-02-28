@@ -18,12 +18,19 @@ class TestIVFPQIndex:
         index = IVFPQIndex(IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS))
         assert isinstance(index.ivf, InvertedFile)
 
-    @property
+    def test_centroids(self):
+        index = IVFPQIndex(IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS))
+        with pytest.raises(RuntimeError):
+            index.centroids
+        x = torch.rand(N, D)
+        index.train(x)
+        assert utils.is_equal_shape(index.centroids, [NLISTS, D])
+
     def test_is_trained(self):
         index = IVFPQIndex(IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS))
         x = torch.rand(N, D)
         assert not index.is_trained
-        index.ivf.train(x)
+        index.train(x)
         assert index.is_trained
 
     @pytest.mark.parametrize("residual", [True, False])

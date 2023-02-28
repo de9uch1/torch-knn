@@ -10,6 +10,13 @@ D = 8
 
 class TestLinearFlatIndex:
     @pytest.mark.parametrize("metric", [metrics.L2Metric(), metrics.CosineMetric()])
+    def test_add(self, metric: metrics.Metric):
+        x = torch.rand(N, D)
+        index = LinearFlatIndex(LinearFlatIndex.Config(D, metric=metric))
+        index.add(x)
+        torch.testing.assert_close(index.data, index.transform(x))
+
+    @pytest.mark.parametrize("metric", [metrics.L2Metric(), metrics.CosineMetric()])
     @pytest.mark.parametrize("k", [1, 2, 8])
     def test_search(self, metric: metrics.Metric, k: int):
         torch.manual_seed(0)

@@ -35,6 +35,14 @@ class IVFFlatIndex(FlatStorage):
     cfg: "IVFFlatIndex.Config"
 
     @property
+    def centroids(self) -> torch.Tensor:
+        """Returns centroid tensor of shape `(nlists, D)`"""
+        if self.ivf.centroids is None:
+            raise RuntimeError("This index must be trained.")
+
+        return self.ivf.centroids
+
+    @property
     def is_trained(self) -> bool:
         """Returns whether the index is trained or not."""
         return super().is_trained and self.ivf.is_trained
@@ -51,9 +59,6 @@ class IVFFlatIndex(FlatStorage):
         x = self.transform(x)
         self.ivf.train(x)
         return self
-
-    def nprobe(self, n: int) -> None:
-        self._nprobe = max(n, 1)
 
     def add(self, x: torch.Tensor) -> None:
         """Adds the given vectors to the storage.
@@ -80,18 +85,16 @@ class IVFFlatIndex(FlatStorage):
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
-        if self.ivf.centroids is None:
-            raise RuntimeError("This index must be trained.")
-
         query = self.transform(query)
         nprobe = min(max(nprobe, 1), self.cfg.nlists)
-        coarse_distances = self.metric.compute_distance(query, self.ivf.centroids)
+        coarse_distances = self.metric.compute_distance(query, self.centroids)
         _, centroid_indices = self.metric.topk(coarse_distances, k=nprobe)
         keys = [
             torch.cat([self.ivf.invlists[i] for i in cents])
             for cents in centroid_indices.cpu()
         ]
         key_indices = utils.pad(keys, -1)
+        Nq, Nk = key_indices.size()
         # query: Nq x 1 x D
         # key: Nq x Nk x D
         # distances: Nq x 1 x Nk -> Nq x Nk
@@ -99,6 +102,11 @@ class IVFFlatIndex(FlatStorage):
             query[:, None], self.data[key_indices]
         ).squeeze(1)
         distances = self.metric.mask(distances, key_indices.eq(-1))
-        k_distances, k_probed_indices = self.metric.topk(distances, k=k)
-        k_indices = key_indices.gather(-1, k_probed_indices)
+        k_cand_distances, k_cand_probed_indices = self.metric.topk(distances, k=min(k, Nk))
+        k_cand_indices = key_indices.gather(-1, k_cand_probed_indices)
+
+        k_distances = k_cand_distances.new_full((Nq, k), fill_value=self.metric.farthest_value)
+        k_indices = k_cand_indices.new_full((Nq, k), fill_value=-1)
+        k_distances[:, :min(k, Nk)] = k_cand_distances
+        k_indices[:, :min(k, Nk)] = k_cand_indices
         return k_distances, k_indices
