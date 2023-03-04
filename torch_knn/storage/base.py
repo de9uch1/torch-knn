@@ -1,10 +1,12 @@
 import abc
 from dataclasses import dataclass
-from typing import Set
+from typing import List, Set
 
 import torch
 
 from torch_knn.metrics import CosineMetric, L2Metric, Metric
+from torch_knn.transform.base import Transform
+from torch_knn.transform.l2_normalization import L2NormalizationTransform
 
 
 class Storage(abc.ABC):
@@ -21,7 +23,11 @@ class Storage(abc.ABC):
         self.dtype = cfg.dtype
         self.metric = cfg.metric
         self._data = torch.Tensor()
-        self.pre_transforms = []
+        self.pre_transforms: List[Transform] = []
+        if isinstance(self.metric, CosineMetric):
+            self.pre_transforms.append(
+                L2NormalizationTransform(L2NormalizationTransform.Config(cfg.D, cfg.D)),
+            )
 
     @dataclass
     class Config:
@@ -86,11 +92,8 @@ class Storage(abc.ABC):
         Returns:
             torch.Tensor: Transformed vectors of shape `(N, D)`.
         """
-        if isinstance(self.metric, CosineMetric):
-            x = x / x.norm(dim=-1, keepdim=True)
-
         for t in self.pre_transforms:
-            x = t(x)
+            x = t.encode(x)
         return x
 
     @abc.abstractmethod

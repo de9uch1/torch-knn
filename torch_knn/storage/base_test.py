@@ -87,9 +87,10 @@ class TestStorage:
         cfg = StorageMock.Config(D, metric=metric)
         storage = StorageMock(cfg)
         if isinstance(metric, metrics.CosineMetric):
-            norms = (x**2).sum(-1, keepdim=True) ** 0.5
-            expected = x / norms
-            torch.testing.assert_close(storage.transform(x), expected)
+            torch.testing.assert_close(
+                storage.transform(x),
+                x / (x**2).sum(-1, keepdim=True) ** 0.5,
+            )
         else:
             torch.testing.assert_close(storage.transform(x), x)
 
