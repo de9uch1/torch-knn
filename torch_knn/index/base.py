@@ -1,18 +1,15 @@
+import abc
 from typing import Tuple
 
 import torch
 
-from torch_knn.index.base import Index
-from torch_knn.storage.flat import FlatStorage
+from torch_knn.storage.base import Storage
 
 
-class LinearFlatIndex(FlatStorage, Index):
-    """Flat linear scan index.
+class Index(Storage, metaclass=abc.ABCMeta):
+    """Base class for index classes."""
 
-    Args:
-        cfg (LinearFlatIndex.Config): Configuration for this class.
-    """
-
+    @abc.abstractmethod
     def search(
         self, query: torch.Tensor, k: int = 1, **kwargs
     ) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -21,11 +18,10 @@ class LinearFlatIndex(FlatStorage, Index):
         Args:
             query (torch.Tensor): Query vectors of shape `(Nq, D)`.
             k (int): Number of nearest neighbors to be returned.
+            **kwargs (Dict[str, Any]): Keyword arguments for the search method.
 
         Returns:
             Tuple[torch.Tensor, torch.Tensor]:
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
-        distances = self.metric.compute_distance(query, self.data)
-        return self.metric.topk(distances, k=k)

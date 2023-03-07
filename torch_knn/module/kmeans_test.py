@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from torch_knn import utils
-from torch_knn.metrics import CosineMetric, IPMetric, L2Metric
+from torch_knn.metrics import IPMetric, L2Metric
 from torch_knn.module.kmeans import Kmeans, ParallelKmeans
 
 N = 100
@@ -12,7 +12,7 @@ M = 2
 
 
 class TestKmeans:
-    @pytest.mark.parametrize("metric", [L2Metric(), IPMetric(), CosineMetric()])
+    @pytest.mark.parametrize("metric", [L2Metric(), IPMetric()])
     @pytest.mark.parametrize("init", list(Kmeans.Init))
     def test___init__(self, metric, init):
         kmeans = Kmeans(C, D, metric=metric, init=init)
@@ -91,7 +91,7 @@ class TestKmeans:
 
 
 class TestParallelKmeans:
-    @pytest.mark.parametrize("metric", [L2Metric(), IPMetric(), CosineMetric()])
+    @pytest.mark.parametrize("metric", [L2Metric(), IPMetric()])
     @pytest.mark.parametrize("init", list(ParallelKmeans.Init))
     def test___init__(self, metric, init):
         kmeans = ParallelKmeans(C, D, M, metric=metric, init=init)

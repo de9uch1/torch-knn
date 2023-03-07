@@ -51,10 +51,10 @@ class TestIVFFlatIndex:
         index.add(x)
         assert index.N == 2 * N
 
-    @pytest.mark.parametrize("metric", [metrics.L2Metric(), metrics.CosineMetric()])
     @pytest.mark.parametrize("nprobe", [1, 3])
     @pytest.mark.parametrize("k", [1, 4])
-    def test_search(self, metric: metrics.Metric, k: int, nprobe: int):
+    def test_search(self, k: int, nprobe: int):
+        metric = metrics.L2Metric()
         torch.manual_seed(0)
         index = IVFFlatIndex(IVFFlatIndex.Config(D, metric=metric, nlists=NLISTS))
         x = torch.rand(N, D)
@@ -63,10 +63,7 @@ class TestIVFFlatIndex:
         dists, idxs = index.search(x, k=k, nprobe=nprobe)
         assert utils.is_equal_shape(dists, idxs)
         assert utils.is_equal_shape(dists, [N, k])
-        if isinstance(metric, metrics.CosineMetric):
-            torch.testing.assert_close(dists[:, 0], torch.ones(dists[:, 0].shape))
-        else:
-            torch.testing.assert_close(dists[:, 0], torch.zeros(dists[:, 0].shape))
+        torch.testing.assert_close(dists[:, 0], torch.zeros(dists[:, 0].shape))
 
         if isinstance(metric, metrics.L2Metric):
             torch.testing.assert_close(idxs[:, 0], torch.arange(N))

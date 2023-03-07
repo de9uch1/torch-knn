@@ -3,7 +3,7 @@ from contextlib import nullcontext as does_not_raise
 import pytest
 import torch
 
-from torch_knn import metrics, utils
+from torch_knn import utils
 from torch_knn.storage.base import Storage
 
 N = 3
@@ -80,19 +80,6 @@ class TestStorage:
         storage = StorageMock(cfg)
         storage.add(x)
         assert utils.is_equal_shape(storage.shape, x)
-
-    @pytest.mark.parametrize("metric", [metrics.L2Metric(), metrics.CosineMetric()])
-    def test_transform(self, metric: metrics.Metric):
-        x = torch.rand(N, D)
-        cfg = StorageMock.Config(D, metric=metric)
-        storage = StorageMock(cfg)
-        if isinstance(metric, metrics.CosineMetric):
-            torch.testing.assert_close(
-                storage.transform(x),
-                x / (x**2).sum(-1, keepdim=True) ** 0.5,
-            )
-        else:
-            torch.testing.assert_close(storage.transform(x), x)
 
     def test_add(self):
         x = torch.rand(N, D)

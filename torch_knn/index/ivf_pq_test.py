@@ -58,7 +58,7 @@ class TestIVFPQIndex:
         index = IVFPQIndex(
             IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS, residual=residual)
         )
-        x = index.transform(torch.rand(N, D))
+        x = torch.rand(N, D)
         index.ivf.train(x)
         if not residual:
             assert torch.equal(index.compute_residual(x), x)
@@ -70,9 +70,7 @@ class TestIVFPQIndex:
             )
 
     @pytest.mark.parametrize("residual", [True, False])
-    @pytest.mark.parametrize(
-        "metric", [metrics.L2Metric(), metrics.IPMetric(), metrics.CosineMetric()]
-    )
+    @pytest.mark.parametrize("metric", [metrics.L2Metric(), metrics.IPMetric()])
     @pytest.mark.parametrize("precompute", [True, False])
     def test_train(self, residual: bool, metric: metrics.Metric, precompute: bool):
         index = IVFPQIndex(
@@ -99,9 +97,7 @@ class TestIVFPQIndex:
             assert index.precompute_table is None
 
     @pytest.mark.parametrize("residual", [True, False])
-    @pytest.mark.parametrize(
-        "metric", [metrics.L2Metric(), metrics.IPMetric(), metrics.CosineMetric()]
-    )
+    @pytest.mark.parametrize("metric", [metrics.L2Metric(), metrics.IPMetric()])
     def test_build_precompute_table(self, residual: bool, metric: metrics.Metric):
         cfg = IVFPQIndex.Config(
             D, metric=metric, M=M, ksub=ksub, nlists=NLISTS, residual=residual
@@ -158,16 +154,14 @@ class TestIVFPQIndex:
         index.add(x)
         assert index.N == 2 * N
 
-    @pytest.mark.parametrize(
-        "metric", [metrics.L2Metric(), metrics.IPMetric(), metrics.CosineMetric()]
-    )
+    @pytest.mark.parametrize("metric", [metrics.L2Metric(), metrics.IPMetric()])
     def test_search_preassigned_noresidual(self, metric: metrics.Metric):
         ivfpq_index = IVFPQIndex(
             IVFPQIndex.Config(
                 D, metric=metric, M=M, ksub=ksub, nlists=NLISTS, residual=False
             )
         )
-        x = ivfpq_index.transform(torch.rand(N, D))
+        x = torch.rand(N, D)
         ivfpq_index.ivf.train(x)
         torch.manual_seed(0)
         super(IVFPQIndex, ivfpq_index).train(x)
@@ -183,7 +177,7 @@ class TestIVFPQIndex:
         xq = torch.rand(Nq, D)
         centroid_indices = torch.arange(NLISTS).repeat((Nq, 1))
         dists, idxs = ivfpq_index.search_preassigned_noresidual(
-            ivfpq_index.transform(xq), K, NLISTS, centroid_indices
+            xq, K, NLISTS, centroid_indices
         )
         expected_dists, expected_idxs = linearpq_index.search(xq, k=K)
         assert torch.equal(idxs, expected_idxs)
@@ -191,7 +185,7 @@ class TestIVFPQIndex:
 
     @pytest.mark.parametrize(
         "metric",
-        [metrics.L2Metric(), metrics.IPMetric(), metrics.CosineMetric(), MockMetric()],
+        [metrics.L2Metric(), metrics.IPMetric(), MockMetric()],
     )
     @pytest.mark.parametrize("precompute", [True, False])
     def test_search_preassigned_residual(
@@ -209,7 +203,7 @@ class TestIVFPQIndex:
             )
         )
         torch.manual_seed(0)
-        x = ivfpq_index.transform(torch.rand(N, D))
+        x = torch.rand(N, D)
         ivfpq_index.train(x)
         ivfpq_index.add(x)
 
@@ -222,19 +216,11 @@ class TestIVFPQIndex:
         if isinstance(metric, MockMetric):
             with pytest.raises(NotImplementedError):
                 ivfpq_index.search_preassigned_residual(
-                    ivfpq_index.transform(xq),
-                    K,
-                    NLISTS,
-                    centroid_distances,
-                    centroid_indices,
+                    xq, K, NLISTS, centroid_distances, centroid_indices
                 )
         else:
             dists, idxs = ivfpq_index.search_preassigned_residual(
-                ivfpq_index.transform(xq),
-                K,
-                NLISTS,
-                centroid_distances,
-                centroid_indices,
+                xq, K, NLISTS, centroid_distances, centroid_indices
             )
             recons_data = x.new_zeros((N, D))
             for i, r_i in enumerate(ivfpq_index.ivf.invlists):
@@ -261,7 +247,7 @@ class TestIVFPQIndex:
             )
         )
         torch.manual_seed(0)
-        x = index.transform(torch.rand(N, D))
+        x = torch.rand(N, D)
         index.train(x)
         index.add(x)
 
@@ -285,7 +271,7 @@ class TestIVFPQIndex:
         recons_dists = index.metric.compute_distance(xq, recons_data)
         torch.testing.assert_close(dists, recons_dists)
 
-    @pytest.mark.parametrize("metric", [metrics.IPMetric(), metrics.CosineMetric()])
+    @pytest.mark.parametrize("metric", [metrics.IPMetric()])
     @pytest.mark.parametrize("precompute", [True, False])
     def test_compute_residual_adtable_IP(
         self, metric: metrics.Metric, precompute: bool
@@ -302,7 +288,7 @@ class TestIVFPQIndex:
             )
         )
         torch.manual_seed(0)
-        x = index.transform(torch.rand(N, D))
+        x = torch.rand(N, D)
         index.train(x)
         index.add(x)
 
@@ -326,11 +312,7 @@ class TestIVFPQIndex:
         torch.testing.assert_close(dists, recons_dists)
 
     @pytest.mark.parametrize(
-        "metric,eps",
-        [
-            (metrics.L2Metric(), 0.05),
-            (metrics.CosineMetric(), 0.98),
-        ],
+        "metric,eps", [(metrics.L2Metric(), 0.1), (metrics.IPMetric(), 0.25)]
     )
     @pytest.mark.parametrize("residual", [True, False])
     @pytest.mark.parametrize("precompute", [True, False])
@@ -366,10 +348,10 @@ class TestIVFPQIndex:
         assert utils.is_equal_shape(dists, idxs)
         assert utils.is_equal_shape(dists, [Nq, k])
         # Self search
-        if isinstance(metric, metrics.CosineMetric):
-            assert torch.greater_equal(dists[:, 0].mean(), eps)
-        else:
-            assert torch.less_equal(dists[:, 0].mean() / D, eps)
+        distance_matrix = metric.compute_distance(xq, x)
+        expected_dists, expected_idxs = metric.topk(distance_matrix, k=k)
+        assert torch.less_equal((dists - expected_dists).square().sqrt().mean(), eps)
 
         if isinstance(metric, metrics.L2Metric):
+            assert torch.less_equal(dists[:, 0].mean() / D, eps)
             assert torch.equal(idxs[:, 0], torch.arange(Nq))

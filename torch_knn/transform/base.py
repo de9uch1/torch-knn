@@ -8,6 +8,8 @@ from torch import Tensor
 class Transform(abc.ABC):
     def __init__(self, cfg: "Transform.Config") -> None:
         self.cfg = cfg
+        self.d_in = cfg.d_in
+        self.d_out = cfg.d_out
 
     @dataclass
     class Config:

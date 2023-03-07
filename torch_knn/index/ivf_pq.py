@@ -79,7 +79,6 @@ class IVFPQIndex(LinearPQIndex):
         Returns:
             IVFFlatIndex: The trained index object.
         """
-        x = self.transform(x)
         self.ivf.train(x)
         pq_training_vectors = self.compute_residual(x)
         super().train(pq_training_vectors)
@@ -116,7 +115,6 @@ class IVFPQIndex(LinearPQIndex):
         Args:
             x (torch.Tensor): The input vectors of shape `(N, D)`.
         """
-        x = self.transform(x)
         self.ivf.add(x)
         x = self.compute_residual(x)
         super().add(x)
@@ -306,7 +304,7 @@ class IVFPQIndex(LinearPQIndex):
             adtable = self.compute_residual_adtable_L2(
                 query, nprobe, centroid_distances, centroid_indices
             ).view(Nq, nprobe, self.M, self.ksub)
-        elif isinstance(self.metric, (metrics.IPMetric, metrics.CosineMetric)):
+        elif isinstance(self.metric, metrics.IPMetric):
             adtable = self.compute_residual_adtable_IP(
                 query, nprobe, centroid_distances
             ).view(Nq, nprobe, self.M, self.ksub)
@@ -351,7 +349,6 @@ class IVFPQIndex(LinearPQIndex):
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
-        query = self.transform(query)
         nprobe = min(max(nprobe, 1), self.cfg.nlists)
         # 1st stage search
         coarse_distances = self.metric.compute_distance(query, self.centroids)

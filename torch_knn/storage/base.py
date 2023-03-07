@@ -1,15 +1,14 @@
 import abc
 from dataclasses import dataclass
-from typing import List, Set
+from typing import Set
 
 import torch
+import torch.nn as nn
 
-from torch_knn.metrics import CosineMetric, L2Metric, Metric
-from torch_knn.transform.base import Transform
-from torch_knn.transform.l2_normalization import L2NormalizationTransform
+from torch_knn.metrics import L2Metric, Metric
 
 
-class Storage(abc.ABC):
+class Storage(nn.Module, metaclass=abc.ABCMeta):
     """Base class for storage.
 
     Args:
@@ -23,11 +22,6 @@ class Storage(abc.ABC):
         self.dtype = cfg.dtype
         self.metric = cfg.metric
         self._data = torch.Tensor()
-        self.pre_transforms: List[Transform] = []
-        if isinstance(self.metric, CosineMetric):
-            self.pre_transforms.append(
-                L2NormalizationTransform(L2NormalizationTransform.Config(cfg.D, cfg.D)),
-            )
 
     @dataclass
     class Config:
@@ -82,19 +76,6 @@ class Storage(abc.ABC):
     def shape(self) -> torch.Size:
         """Returns the shape of the storage tensor."""
         return self.data.shape
-
-    def transform(self, x: torch.Tensor) -> torch.Tensor:
-        """Pre-transforms the given vectors.
-
-        Args:
-            x (torch.Tensor): The input vectors of shape `(N, Din)`.
-
-        Returns:
-            torch.Tensor: Transformed vectors of shape `(N, D)`.
-        """
-        for t in self.pre_transforms:
-            x = t.encode(x)
-        return x
 
     @abc.abstractmethod
     def encode(self, x: torch.Tensor) -> torch.Tensor:

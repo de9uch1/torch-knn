@@ -132,7 +132,3 @@ class IPMetric(Metric):
     def farthest_value(self) -> float:
         """Returns the farthest value under this metric."""
         return float("-inf")
-
-
-class CosineMetric(IPMetric):
-    """Cosine metric for cosine similarity computation."""

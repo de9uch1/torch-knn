@@ -32,6 +32,7 @@ class PQStorage(Storage):
         Args:
             D (int): Dimension size of input vectors.
             dtype (torch.dtype): The input vector dtype. (default: torch.float32)
+            metric (Metric): Metric for dinstance computation.
             M (int): The number of sub-vectors.
             ksub (int): Codebook size of a sub-space. (default: 256)
             code_dtype (torch.dtype): DType for stored codes. (default: torch.uint8)
@@ -72,7 +73,7 @@ class PQStorage(Storage):
         return self._codebook
 
     @codebook.setter
-    def codebook(self, codebook) -> None:
+    def codebook(self, codebook: torch.Tensor) -> None:
         """Sets PQ codebook of shape `(M, ksub, dsub)`."""
         if not utils.is_equal_shape(codebook, [self.M, self.ksub, self.dsub]):
             raise ValueError("The codebook must be the shape of `(M, ksub, dsub)`.")

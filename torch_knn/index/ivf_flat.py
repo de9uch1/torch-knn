@@ -4,11 +4,12 @@ from typing import Tuple
 import torch
 
 from torch_knn import utils
+from torch_knn.index.base import Index
 from torch_knn.module.ivf import InvertedFile
 from torch_knn.storage.flat import FlatStorage
 
 
-class IVFFlatIndex(FlatStorage):
+class IVFFlatIndex(FlatStorage, Index):
     """Inverted file index class.
 
     Args:
@@ -53,7 +54,6 @@ class IVFFlatIndex(FlatStorage):
         Returns:
             IVFFlatIndex: The trained index object.
         """
-        x = self.transform(x)
         self.ivf.train(x)
         return self
 
@@ -63,7 +63,6 @@ class IVFFlatIndex(FlatStorage):
         Args:
             x (torch.Tensor): The input vectors of shape `(N, D)`.
         """
-        x = self.transform(x)
         self.ivf.add(x)
         super().add(x)
 
@@ -82,7 +81,6 @@ class IVFFlatIndex(FlatStorage):
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
-        query = self.transform(query)
         nprobe = min(max(nprobe, 1), self.cfg.nlists)
         coarse_distances = self.metric.compute_distance(query, self.centroids)
         _, centroid_indices = self.metric.topk(coarse_distances, k=nprobe)

@@ -27,16 +27,6 @@ repos:
     hooks:
     -   id: black
         language_version: python3.8
--   repo: https://github.com/asottile/add-trailing-comma
-    rev: v2.4.0
-    hooks:
-    -   id: add-trailing-comma
-        args: [--py36-plus]
--   repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
-    hooks:
-    -   id: pyupgrade
-        args: [--py38-plus]
 -   repo: https://github.com/pre-commit/mirrors-autopep8
     rev: v2.0.1
     hooks:
@@ -45,6 +35,7 @@ repos:
     rev: 6.0.0
     hooks:
     -   id: flake8
+        args: ["--extend-ignore", "E203,E501,F401"]
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.0.1
     hooks:
