@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Type
 
 import torch
 
@@ -23,7 +23,7 @@ class PQStorage(Storage):
     def __init__(self, cfg: "PQStorage.Config"):
         super().__init__(cfg)
         self._data = self.data.to(cfg.code_dtype)
-        self._codebook: Optional[torch.Tensor] = None
+        self.register_buffer("_codebook", None)
 
     @dataclass
     class Config(Storage.Config):

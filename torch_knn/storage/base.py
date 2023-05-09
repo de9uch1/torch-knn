@@ -18,9 +18,11 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
     support_dtypes: Set[torch.dtype] = {torch.float32, torch.float16}
 
     def __init__(self, cfg: "Storage.Config"):
+        super().__init__()
         self.cfg = cfg
         self.dtype = cfg.dtype
         self.metric = cfg.metric
+        self.register_buffer("_data", torch.Tensor())
         self._data = torch.Tensor()
 
     @dataclass
