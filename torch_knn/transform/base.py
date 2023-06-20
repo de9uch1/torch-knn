@@ -1,7 +1,6 @@
 import abc
 from dataclasses import dataclass
 
-import torch
 from torch import Tensor
 
 
@@ -18,12 +17,10 @@ class Transform(abc.ABC):
         Args:
             d_in (int): Dimension size of input vectors.
             d_out (int): Dimension size of output vectors.
-            dtype (torch.dtype): The input vector dtype. (default: torch.float32)
         """
 
         d_in: int
         d_out: int
-        dtype: torch.dtype = torch.float32
 
     @property
     @abc.abstractmethod

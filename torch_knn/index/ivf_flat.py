@@ -26,7 +26,6 @@ class IVFFlatIndex(FlatStorage, Index):
 
         Args:
             D (int): Dimension size of input vectors.
-            dtype (torch.dtype): The input vector dtype. (default: torch.float32)
             metric (Metric): Metric for dinstance computation.
             nlists (int): Number of clusters.
         """

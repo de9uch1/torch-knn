@@ -27,7 +27,6 @@ class IVFPQIndex(LinearPQIndex):
 
         Args:
             D (int): Dimension size of input vectors.
-            dtype (torch.dtype): The input vector dtype. (default: torch.float32)
             M (int): The number of sub-vectors.
             ksub (int): Codebook size of a sub-space. (default: 256)
             code_dtype (torch.dtype): DType for stored codes. (default: torch.uint8)

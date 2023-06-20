@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-import torch
 from torch import Tensor
 
 from torch_knn.transform.base import Transform
@@ -50,13 +49,8 @@ class TransformMock(Transform):
 class TestTransform:
     @pytest.mark.parametrize("d_in", [8, 16])
     @pytest.mark.parametrize("d_out", [8, 16])
-    @pytest.mark.parametrize(
-        "dtype",
-        [torch.float32, torch.float16, torch.float, torch.half],
-    )
-    def test___init__(self, d_in: int, d_out: int, dtype: torch.dtype):
-        cfg = Transform.Config(d_in, d_out, dtype)
+    def test___init__(self, d_in: int, d_out: int):
+        cfg = Transform.Config(d_in, d_out)
         transform = TransformMock(cfg)
         assert transform.cfg.d_in == d_in
         assert transform.cfg.d_out == d_out
-        assert transform.cfg.dtype == dtype

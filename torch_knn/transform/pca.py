@@ -21,7 +21,6 @@ class PCATransform(Transform):
         Args:
             d_in (int): Dimension size of input vectors.
             d_out (int): Dimension size of output vectors.
-            dtype (torch.dtype): The input vector dtype. (default: torch.float32)
         """
 
         def __post_init__(self):

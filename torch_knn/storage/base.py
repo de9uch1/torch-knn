@@ -1,6 +1,5 @@
 import abc
 from dataclasses import dataclass
-from typing import Set
 
 import torch
 import torch.nn as nn
@@ -15,11 +14,8 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
         cfg (Storage.Config): Configuration for this class.
     """
 
-    support_dtypes: Set[torch.dtype] = {torch.float32, torch.float16}
-
     def __init__(self, cfg: "Storage.Config"):
         self.cfg = cfg
-        self.dtype = cfg.dtype
         self.metric = cfg.metric
         self._data = torch.Tensor()
 
@@ -29,16 +25,11 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
 
         Args:
             D (int): Dimension size of input vectors.
-            dtype (torch.dtype): The input vector dtype. (default: torch.float32)
             metric (Metric): Metric for dinstance computation.
         """
 
         D: int
-        dtype: torch.dtype = torch.float32
         metric: Metric = L2Metric()
-
-        def __post_init__(self):
-            Storage.check_supported_dtype(self.dtype)
 
     @property
     def N(self) -> int:
@@ -49,23 +40,6 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
     def D(self) -> int:
         """Dimension size of the vectors."""
         return self.cfg.D
-
-    @classmethod
-    def check_supported_dtype(cls, dtype: torch.dtype) -> torch.dtype:
-        """Checks whether the specified dtype is supported or not.
-
-        Args:
-            dtype (torch.dtype): The specified dtype.
-
-        Returns:
-            torch.dtype: The specified dtype.
-
-        Raises:
-            ValueError: When given the unsupported dtype.
-        """
-        if dtype not in cls.support_dtypes:
-            raise ValueError(f"The dtype `{dtype}` is not supported for this storage.")
-        return dtype
 
     @property
     def data(self) -> torch.Tensor:
@@ -121,4 +95,4 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
         Args:
             x (torch.Tensor): The input vectors of shape `(N, D)`.
         """
-        self._data = torch.cat([self.data, self.encode(x.to(self.dtype))])
+        self._data = torch.cat([self.data, self.encode(x)])

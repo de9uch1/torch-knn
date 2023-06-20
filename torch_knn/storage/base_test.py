@@ -1,6 +1,3 @@
-from contextlib import nullcontext as does_not_raise
-
-import pytest
 import torch
 
 from torch_knn import utils
@@ -26,22 +23,12 @@ class StorageMock(Storage):
 
 
 class TestStorage:
-    @pytest.mark.parametrize(
-        "dtype,expectation",
-        [
-            (torch.float32, does_not_raise()),
-            (torch.float16, does_not_raise()),
-            (torch.float, does_not_raise()),
-            (torch.half, does_not_raise()),
-            (torch.long, pytest.raises(ValueError)),
-            (torch.uint8, pytest.raises(ValueError)),
-        ],
-    )
-    def test___init__(self, dtype, expectation):
+    def test___init__(self):
         x = torch.rand(N, D)
-        with expectation:
-            cfg = StorageMock.Config(x.size(-1), dtype=dtype)
-            StorageMock(cfg)
+        cfg = StorageMock.Config(x.size(-1))
+        storage = StorageMock(cfg)
+        assert storage.cfg == cfg
+        assert storage.metric == cfg.metric
 
     def test_N(self):
         x = torch.rand(N, D)
@@ -54,21 +41,6 @@ class TestStorage:
         cfg = StorageMock.Config(D)
         storage = StorageMock(cfg)
         assert storage.D == D
-
-    @pytest.mark.parametrize(
-        "dtype,expectation",
-        [
-            (torch.float32, does_not_raise()),
-            (torch.float16, does_not_raise()),
-            (torch.float, does_not_raise()),
-            (torch.half, does_not_raise()),
-            (torch.long, pytest.raises(ValueError)),
-            (torch.uint8, pytest.raises(ValueError)),
-        ],
-    )
-    def test_check_supported_dtype(self, dtype, expectation):
-        with expectation:
-            Storage.check_supported_dtype(dtype)
 
     def test_shape(self):
         cfg = StorageMock.Config(int())

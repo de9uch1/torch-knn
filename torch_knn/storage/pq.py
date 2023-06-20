@@ -31,7 +31,6 @@ class PQStorage(Storage):
 
         Args:
             D (int): Dimension size of input vectors.
-            dtype (torch.dtype): The input vector dtype. (default: torch.float32)
             metric (Metric): Metric for dinstance computation.
             M (int): The number of sub-vectors.
             ksub (int): Codebook size of a sub-space. (default: 256)
@@ -121,7 +120,7 @@ class PQStorage(Storage):
         # x[n, m, d] = codebook[m][codes[n][m]][d]
         x = self.codebook[torch.arange(self.M), codes]
         # x: N x M x dsub -> N x D
-        return x.view(N, self.D).to(self.dtype)
+        return x.view(N, self.D)
 
     @property
     def is_trained(self) -> bool:

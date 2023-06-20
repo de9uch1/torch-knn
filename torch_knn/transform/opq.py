@@ -21,7 +21,6 @@ class OPQTransform(Transform):
         Args:
             d_in (int): Dimension size of input vectors.
             d_out (int): Dimension size of output vectors.
-            dtype (torch.dtype): The input vector dtype. (default: torch.float32)
             M (int): The number of sub-vectors.
             ksub (int): Codebook size of a sub-space. (default: 256)
             code_dtype (torch.dtype): DType for stored codes. (default: torch.uint8)
@@ -77,7 +76,6 @@ class OPQTransform(Transform):
             pq = PQStorage(
                 PQStorage.Config(
                     cfg.d_out,
-                    dtype=cfg.dtype,
                     M=cfg.M,
                     ksub=cfg.ksub,
                     code_dtype=cfg.code_dtype,
