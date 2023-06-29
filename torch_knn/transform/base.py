@@ -14,9 +14,8 @@ class Transform(abc.ABC):
     class Config:
         """Base class for transform config.
 
-        Args:
-            d_in (int): Dimension size of input vectors.
-            d_out (int): Dimension size of output vectors.
+        - d_in (int): Dimension size of input vectors.
+        - d_out (int): Dimension size of output vectors.
         """
 
         d_in: int

@@ -29,13 +29,12 @@ class PQStorage(Storage):
     class Config(Storage.Config):
         """Base class for storage config.
 
-        Args:
-            D (int): Dimension size of input vectors.
-            metric (Metric): Metric for dinstance computation.
-            M (int): The number of sub-vectors.
-            ksub (int): Codebook size of a sub-space. (default: 256)
-            code_dtype (torch.dtype): DType for stored codes. (default: torch.uint8)
-            train_niter (int): Number of training iteration.
+        - D (int): Dimension size of input vectors.
+        - metric (Metric): Metric for dinstance computation.
+        - M (int): The number of sub-vectors.
+        - ksub (int): Codebook size of a sub-space. (default: 256)
+        - code_dtype (torch.dtype): DType for stored codes. (default: torch.uint8)
+        - train_niter (int): Number of training iteration.
         """
 
         M: int = 1

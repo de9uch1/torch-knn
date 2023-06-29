@@ -25,16 +25,15 @@ class IVFPQIndex(LinearPQIndex):
     class Config(PQStorage.Config):
         """IVFPQIndex configuration.
 
-        Args:
-            D (int): Dimension size of input vectors.
-            M (int): The number of sub-vectors.
-            ksub (int): Codebook size of a sub-space. (default: 256)
-            code_dtype (torch.dtype): DType for stored codes. (default: torch.uint8)
-            train_niter (int): Number of training iteration.
-            metric (Metric): Metric for dinstance computation.
-            nlists (int): Number of clusters.
-            residual (bool): Trains PQ by the residual vectors. (default: True)
-            precompute (bool): Precompute distance table for faster L2 search.
+        - D (int): Dimension size of input vectors.
+        - M (int): The number of sub-vectors.
+        - ksub (int): Codebook size of a sub-space. (default: 256)
+        - code_dtype (torch.dtype): DType for stored codes. (default: torch.uint8)
+        - train_niter (int): Number of training iteration.
+        - metric (Metric): Metric for dinstance computation.
+        - nlists (int): Number of clusters.
+        - residual (bool): Trains PQ by the residual vectors. (default: True)
+        - precompute (bool): Precompute distance table for faster L2 search.
         """
 
         nlists: int = 1

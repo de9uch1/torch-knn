@@ -24,10 +24,9 @@ class IVFFlatIndex(FlatStorage, Index):
     class Config(FlatStorage.Config):
         """IVFFlatIndex configuration.
 
-        Args:
-            D (int): Dimension size of input vectors.
-            metric (Metric): Metric for dinstance computation.
-            nlists (int): Number of clusters.
+        - D (int): Dimension size of input vectors.
+        - metric (Metric): Metric for dinstance computation.
+        - nlists (int): Number of clusters.
         """
 
         nlists: int = 1

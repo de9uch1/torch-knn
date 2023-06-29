@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+import torch.nn.functional as F
 from torch import Tensor
 
 from torch_knn.transform.base import Transform
@@ -10,19 +11,10 @@ class L2NormalizationTransform(Transform):
 
     @dataclass
     class Config(Transform.Config):
-        """Base class for transform config.
+        d_in: int = -1
+        d_out: int = -1
 
-        Args:
-            d_in (int): Dimension size of input vectors.
-            d_out (int): Dimension size of output vectors.
-        """
-
-        def __post_init__(self):
-            """Validates the dimension size."""
-            if self.d_in != self.d_out:
-                raise ValueError("d_in must be == d_out.")
-
-    cfg: Config
+    cfg: "L2NormalizationTransform.Config"
 
     @property
     def is_trained(self) -> bool:
@@ -49,7 +41,7 @@ class L2NormalizationTransform(Transform):
         Returns:
             Tensor: Transformed vectors of shape `(n, d_out)`.
         """
-        return x / x.norm(dim=-1, keepdim=True)
+        return F.normalize(x, dim=-1)
 
     def decode(self, x) -> Tensor:
         """Returns the input vectors.

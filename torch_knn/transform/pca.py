@@ -16,11 +16,10 @@ class PCATransform(Transform):
 
     @dataclass
     class Config(Transform.Config):
-        """Base class for transform config.
+        """PCA transform config.
 
-        Args:
-            d_in (int): Dimension size of input vectors.
-            d_out (int): Dimension size of output vectors.
+        - d_in (int): Dimension size of input vectors.
+        - d_out (int): Dimension size of output vectors.
         """
 
         def __post_init__(self):

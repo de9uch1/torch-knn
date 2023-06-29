@@ -23,9 +23,8 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
     class Config:
         """Base class for storage config.
 
-        Args:
-            D (int): Dimension size of input vectors.
-            metric (Metric): Metric for dinstance computation.
+        - D (int): Dimension size of input vectors.
+        - metric (Metric): Metric for dinstance computation.
         """
 
         D: int
