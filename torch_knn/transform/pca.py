@@ -11,8 +11,8 @@ from torch_knn.transform.base import Transform
 class PCATransform(Transform):
     def __init__(self, cfg: "PCATransform.Config") -> None:
         super().__init__(cfg)
-        self._weight: Optional[Tensor] = None
-        self._mean: Optional[Tensor] = None
+        self.register_buffer("_weight", None)
+        self.register_buffer("_mean", None)
 
     @dataclass
     class Config(Transform.Config):

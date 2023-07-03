@@ -12,7 +12,7 @@ from torch_knn.transform.base import Transform
 class OPQTransform(Transform):
     def __init__(self, cfg: "OPQTransform.Config") -> None:
         super().__init__(cfg)
-        self._weight: Optional[Tensor] = None
+        self.register_buffer("_weight", None)
 
     @dataclass
     class Config(Transform.Config):

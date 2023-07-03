@@ -1,12 +1,13 @@
 from typing import Generator, List, Optional, Tuple, Union
 
+import torch.nn as nn
 from torch import Tensor
 
 from torch_knn.index.base import Index
 from torch_knn.transform.base import Transform
 
 
-class Pipeline:
+class Pipeline(nn.Module):
     """Pipeline class.
 
     Args:
@@ -15,6 +16,7 @@ class Pipeline:
     """
 
     def __init__(self, index: Index, pre_transforms: Optional[List[Transform]] = None):
+        super().__init__()
         self.index = index
         self.pre_transforms = pre_transforms if pre_transforms is not None else []
 

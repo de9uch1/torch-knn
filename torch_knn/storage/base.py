@@ -15,9 +15,10 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
     """
 
     def __init__(self, cfg: "Storage.Config"):
+        super().__init__()
         self.cfg = cfg
         self.metric = cfg.metric
-        self._data = torch.Tensor()
+        self.register_buffer("_data", torch.Tensor())
 
     @dataclass
     class Config:

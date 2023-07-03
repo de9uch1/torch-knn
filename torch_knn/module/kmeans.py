@@ -1,14 +1,14 @@
 from enum import Enum
-from typing import Optional
 
 import torch
+import torch.nn as nn
 from torch import Tensor
 
 from torch_knn import utils
 from torch_knn.metrics import L2Metric, Metric
 
 
-class Kmeans:
+class Kmeans(nn.Module):
     """k-means clustering class.
 
     Args:
@@ -20,7 +20,6 @@ class Kmeans:
 
     class Init(Enum):
         RANDOM = "random"
-        KMEANSPP = "kmeanspp"
 
     def __init__(
         self,
@@ -29,11 +28,12 @@ class Kmeans:
         metric: Metric = L2Metric(),
         init: Init = Init.RANDOM,
     ) -> None:
+        super().__init__()
         self.ncentroids = ncentroids
         self.dim = dim
         self.metric = metric
         self.init = init
-        self._centroids: Optional[Tensor] = None
+        self.register_buffer("_centroids", None)
 
     @property
     def centroids(self) -> Tensor:
@@ -150,8 +150,8 @@ class ParallelKmeans(Kmeans):
         metric: Metric = L2Metric(),
         init: Kmeans.Init = Kmeans.Init.RANDOM,
     ) -> None:
-        self.nspaces = nspaces
         super().__init__(ncentroids, dim, metric=metric, init=init)
+        self.nspaces = nspaces
 
     @property
     def centroids(self) -> Tensor:

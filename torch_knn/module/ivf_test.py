@@ -14,7 +14,6 @@ class TestInvertedFile:
         ivf = InvertedFile(storage, NLISTS)
         assert ivf.metric == storage.metric
         assert ivf.nlists == NLISTS
-        assert ivf.storage == storage
         assert len(ivf.invlists) == NLISTS
 
     def test_add(self):

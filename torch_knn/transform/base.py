@@ -1,11 +1,13 @@
 import abc
 from dataclasses import dataclass
 
+import torch.nn as nn
 from torch import Tensor
 
 
-class Transform(abc.ABC):
+class Transform(nn.Module, metaclass=abc.ABCMeta):
     def __init__(self, cfg: "Transform.Config") -> None:
+        super().__init__()
         self.cfg = cfg
         self.d_in = cfg.d_in
         self.d_out = cfg.d_out
