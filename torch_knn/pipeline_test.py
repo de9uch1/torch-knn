@@ -6,7 +6,7 @@ from torch_knn.index.linear_pq import LinearPQIndex
 from torch_knn.pipeline import Pipeline
 from torch_knn.transform.base import Transform
 
-N = 3
+N = 16
 D = 8
 
 
@@ -156,7 +156,7 @@ class TestPipeline:
         index = LinearFlatIndex(LinearFlatIndex.Config(D))
         transform = AddOneTransform(AddOneTransform.Config(D, D))
         pipeline = Pipeline(index, [transform])
-        assert torch.allclose(pipeline.decode(pipeline.encode(x)), x)
+        torch.testing.assert_close(pipeline.decode(pipeline.encode(x)), x)
 
     def test_is_trained(self):
         x = torch.rand(N, D)

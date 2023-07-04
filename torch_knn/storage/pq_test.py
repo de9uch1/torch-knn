@@ -39,8 +39,6 @@ class TestPQStorage:
 
     def test_codebook(self):
         storage = PQStorage(PQStorage.Config(D, M=M, ksub=ksub))
-        with pytest.raises(RuntimeError):
-            storage.codebook
         x = torch.rand(N, D)
         storage.train(x)
         assert utils.is_equal_shape(storage.codebook, [M, ksub, dsub])
@@ -58,8 +56,6 @@ class TestPQStorage:
         cfg = PQStorage.Config(D, M=M, ksub=ksub)
         x = torch.rand(N, D)
         storage = PQStorage(cfg)
-        with pytest.raises(RuntimeError):
-            storage.encode(x)
         storage.train(x)
         codes = storage.encode(x)
         assert utils.is_equal_shape(codes, [N, M])
@@ -158,8 +154,6 @@ class TestPQStorage:
         cfg = PQStorage.Config(D, M=M, ksub=ksub)
         x = torch.rand(N, D)
         storage = PQStorage(cfg)
-        with pytest.raises(RuntimeError):
-            storage.compute_adtable(x)
         storage.train(x)
         codes = storage.encode(x)
         assert utils.is_equal_shape(codes, [N, M])

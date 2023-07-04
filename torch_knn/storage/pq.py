@@ -40,7 +40,7 @@ class PQStorage(Storage):
         M: int = 1
         ksub: int = 256
         code_dtype: torch.dtype = torch.uint8
-        train_niter: int = 10
+        train_niter: int = 50
 
         def __post_init__(self):
             if self.D % self.M > 0:
@@ -135,7 +135,7 @@ class PQStorage(Storage):
         """
         kmeans = ParallelKmeans(self.ksub, self.dsub, self.M)
         self._codebook = kmeans.train(
-            x.view(x.size(0), self.M, self.dsub), self.cfg.train_niter
+            x.view(x.size(0), self.M, self.dsub), niter=self.cfg.train_niter
         )
         self._trained[:] = True
         return self
@@ -185,15 +185,29 @@ class PQStorage(Storage):
             # Note that Tensor.expand() does not allocate new memory.
             adtable = self[:, None].expand(self.Nq, Nk, self.M, self.ksub)
 
-            # codes: Nq x Nk x M -> Nq x Nk x M x 1
-            # gather() -> Nq x Nk x M x 1
-            # squeeze() -> Nq x Nk x M
-            # sum() -> Nq x Nk
-            return torch.Tensor(
-                adtable.gather(dim=-1, index=codes.long().unsqueeze(-1))
-                .squeeze(-1)
-                .sum(dim=-1)
-            )
+            ## This is the parallel version of PQ linear scan.
+            ## Because of memory efficient, for-loop scanning over PQ subspaces is
+            ## employed in this implementation.
+
+            ## codes: Nq x Nk x M -> Nq x Nk x M x 1
+            ## gather() -> Nq x Nk x M x 1
+            ## squeeze() -> Nq x Nk x M
+            ## sum() -> Nq x Nk
+            # distances = torch.Tensor(
+            #     adtable.gather(dim=-1, index=codes.long().unsqueeze(-1))
+            #     .squeeze(-1)
+            #     .sum(dim=-1)
+            # )
+
+            ## This is the for-loop version of PQ linear scan that is employed.
+            distances = adtable.new_zeros(self.Nq, Nk)
+            for m in range(self.M):
+                distances += (
+                    adtable[:, :, m]
+                    .gather(dim=-1, index=codes[:, :, m].long().unsqueeze(-1))
+                    .squeeze(-1)
+                )
+            return distances
 
     def compute_adtable(self, query: torch.Tensor) -> "ADTable":
         """Computes an ADC table.

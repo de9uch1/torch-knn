@@ -27,9 +27,11 @@ class IVFFlatIndex(FlatStorage, Index):
         - D (int): Dimension size of input vectors.
         - metric (Metric): Metric for dinstance computation.
         - nlists (int): Number of clusters.
+        - train_ivf_niter (int): Number of iterations for IVF training.
         """
 
         nlists: int = 1
+        train_ivf_niter: int = 30
 
     cfg: "IVFFlatIndex.Config"
 
@@ -52,7 +54,7 @@ class IVFFlatIndex(FlatStorage, Index):
         Returns:
             IVFFlatIndex: The trained index object.
         """
-        self.ivf.train(x)
+        self.ivf.train(x, niter=self.cfg.train_ivf_niter)
         return self
 
     def add(self, x: torch.Tensor) -> None:

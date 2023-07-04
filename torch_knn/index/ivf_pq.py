@@ -32,11 +32,13 @@ class IVFPQIndex(LinearPQIndex):
         - train_niter (int): Number of training iteration.
         - metric (Metric): Metric for dinstance computation.
         - nlists (int): Number of clusters.
+        - train_ivf_niter (int): Number of iterations for IVF training.
         - residual (bool): Trains PQ by the residual vectors. (default: True)
         - precompute (bool): Precompute distance table for faster L2 search.
         """
 
         nlists: int = 1
+        train_ivf_niter: int = 30
         residual: bool = True
         precompute: bool = False
 
@@ -77,7 +79,7 @@ class IVFPQIndex(LinearPQIndex):
         Returns:
             IVFFlatIndex: The trained index object.
         """
-        self.ivf.train(x)
+        self.ivf.train(x, niter=self.cfg.train_ivf_niter)
         pq_training_vectors = self.compute_residual(x)
         super().train(pq_training_vectors)
         if self.cfg.precompute:

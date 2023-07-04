@@ -20,13 +20,14 @@ class Kmeans(nn.Module):
 
     class Init(Enum):
         RANDOM = "random"
+        RANDOM_PICK = "random_pick"
 
     def __init__(
         self,
         ncentroids: int,
         dim: int,
         metric: Metric = L2Metric(),
-        init: Init = Init.RANDOM,
+        init: Init = Init.RANDOM_PICK,
     ) -> None:
         super().__init__()
         self.ncentroids = ncentroids
@@ -70,6 +71,8 @@ class Kmeans(nn.Module):
         """
         if init == self.Init.RANDOM:
             return torch.rand(self.ncentroids, self.dim)
+        elif init == self.Init.RANDOM_PICK:
+            return torch.zeros(self.ncentroids, self.dim)
         else:
             raise NotImplementedError
 
@@ -105,7 +108,7 @@ class Kmeans(nn.Module):
         """Returns whether the centroids are trained or not."""
         return self._trained
 
-    def train(self, x: Tensor, niter: int = 10) -> Tensor:
+    def train(self, x: Tensor, niter: int = 50) -> Tensor:
         """Trains k-means.
 
         Args:
@@ -115,7 +118,10 @@ class Kmeans(nn.Module):
         Returns:
             Tensor: Centroids tensor of shape `(ncentroids, dim)`.
         """
-        self.centroids = self.centroids.to(x)
+        if self.init == self.Init.RANDOM_PICK:
+            self.centroids = x[torch.randperm(x.size(0))[: self.ncentroids]]
+        else:
+            self.centroids = self.centroids.to(x)
         assigns = x.new_full((x.size(0),), fill_value=-1)
         for i in range(niter):
             new_assigns = self.assign(x)
@@ -147,7 +153,7 @@ class ParallelKmeans(Kmeans):
         dim: int,
         nspaces: int,
         metric: Metric = L2Metric(),
-        init: Kmeans.Init = Kmeans.Init.RANDOM,
+        init: Kmeans.Init = Kmeans.Init.RANDOM_PICK,
     ) -> None:
         self.nspaces = nspaces
         super().__init__(ncentroids, dim, metric=metric, init=init)
@@ -186,6 +192,8 @@ class ParallelKmeans(Kmeans):
         """
         if init == self.Init.RANDOM:
             return torch.rand(self.nspaces, self.ncentroids, self.dim)
+        elif init == self.Init.RANDOM_PICK:
+            return torch.zeros(self.nspaces, self.ncentroids, self.dim)
         else:
             raise NotImplementedError
 
@@ -225,7 +233,7 @@ class ParallelKmeans(Kmeans):
             )
         return new_centroids
 
-    def train(self, x: Tensor, niter: int = 10) -> Tensor:
+    def train(self, x: Tensor, niter: int = 50) -> Tensor:
         """Trains k-means.
 
         Args:
@@ -235,7 +243,14 @@ class ParallelKmeans(Kmeans):
         Returns:
             Tensor: Centroids tensor of shape `(nspaces, ncentroids, dim)`.
         """
-        self.centroids = self.centroids.to(x)
+        if self.init == self.Init.RANDOM_PICK:
+            self.centroids = (
+                x[torch.randperm(x.size(0))[: self.ncentroids]]
+                .transpose(0, 1)
+                .contiguous()
+            )
+        else:
+            self.centroids = self.centroids.to(x)
         x = x.transpose(0, 1).contiguous()
         assigns = x.new_full((self.nspaces, x.size(1)), fill_value=-1)
         for i in range(niter):

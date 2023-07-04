@@ -38,7 +38,7 @@ class TestKmeans:
     @pytest.mark.parametrize("init", list(Kmeans.Init))
     def test_init_centroids(self, init):
         kmeans = Kmeans(C, D, init=init)
-        if init not in {Kmeans.Init.RANDOM}:
+        if init not in {Kmeans.Init.RANDOM, Kmeans.Init.RANDOM_PICK}:
             with pytest.raises(NotImplementedError):
                 kmeans.init_centroids(init)
         else:
@@ -80,7 +80,7 @@ class TestKmeans:
         torch.manual_seed(0)
         kmeans = Kmeans(C, D, init=init)
         x = torch.rand(N, D)
-        if init not in {Kmeans.Init.RANDOM}:
+        if init not in {Kmeans.Init.RANDOM, Kmeans.Init.RANDOM_PICK}:
             with pytest.raises(NotImplementedError):
                 kmeans.train(x)
         else:
@@ -117,7 +117,7 @@ class TestParallelKmeans:
     @pytest.mark.parametrize("init", list(ParallelKmeans.Init))
     def test_init_centroids(self, init):
         kmeans = ParallelKmeans(C, D, M, init=init)
-        if init not in {ParallelKmeans.Init.RANDOM}:
+        if init not in {ParallelKmeans.Init.RANDOM, ParallelKmeans.Init.RANDOM_PICK}:
             with pytest.raises(NotImplementedError):
                 kmeans.init_centroids(init)
         else:
@@ -152,7 +152,7 @@ class TestParallelKmeans:
         torch.manual_seed(0)
         x = torch.rand(N, M, D)
         kmeans = ParallelKmeans(C, D, M, init=init)
-        if init not in {ParallelKmeans.Init.RANDOM}:
+        if init not in {ParallelKmeans.Init.RANDOM, ParallelKmeans.Init.RANDOM_PICK}:
             with pytest.raises(NotImplementedError):
                 kmeans.train(x)
         else:

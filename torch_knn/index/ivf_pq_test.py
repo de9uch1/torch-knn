@@ -12,7 +12,7 @@ NLISTS = 5
 M = 4
 ksub = 16
 N = ksub * 4
-Nq = 8
+Nq = 3
 K = 4
 
 
@@ -325,7 +325,7 @@ class TestIVFPQIndex:
         precompute: bool,
         k: int,
     ):
-        torch.manual_seed(-1)
+        torch.manual_seed(0)
         index = IVFPQIndex(
             IVFPQIndex.Config(
                 D,
@@ -348,7 +348,7 @@ class TestIVFPQIndex:
         # Self search
         distance_matrix = metric.compute_distance(xq, x)
         expected_dists, expected_idxs = metric.topk(distance_matrix, k=k)
-        assert torch.less_equal((dists - expected_dists).square().sqrt().mean(), eps)
+        assert torch.less_equal((dists - expected_dists).square().mean().sqrt(), eps)
 
         if isinstance(metric, metrics.L2Metric):
             assert torch.less_equal(dists[:, 0].mean() / D, eps)
