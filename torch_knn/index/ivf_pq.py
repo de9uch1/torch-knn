@@ -297,9 +297,9 @@ class IVFPQIndex(LinearPQIndex):
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
         # Speed up:
-        # PQ codes are looked up for each cluster.
-        # Thus, we transpose the LUT and set the outer dimensioin as `nprobe`.
-        # The LUT is contiguously represented on the memory.
+        # In our implementation, PQ codes are looked up for each cluster.
+        # Thus, we transpose the LUT and set the outer dimensioin as `nprobe`
+        # because the LUT is contiguously represented on the memory.
         transposed_centroid_distances = centroid_distances.transpose(0, 1).contiguous()
         transposed_centroid_indices = centroid_indices.transpose(0, 1).contiguous()
 
