@@ -37,12 +37,12 @@ class InvertedFile(Kmeans):
             torch.Tensor: Assigned cluster IDs of shape `(N,)`.
         """
         assignments = self.assign(x)
-        start_idx = self.N
-        for i, assign in enumerate(assignments, start=start_idx):
-            self.invlists[assign] = torch.cat(
-                [self.invlists[assign], torch.LongTensor([i])]
+        for cluster_idx in range(self.nlists):
+            data_idx = assignments.eq(cluster_idx).nonzero()[:, 0] + self.N
+            self.invlists[cluster_idx] = torch.cat(
+                [self.invlists[cluster_idx], data_idx.cpu()]
             )
-            self.N += 1
+        self.N += len(assignments)
         return assignments
 
     def get_extra_state(self) -> Tuple[List[Tensor], int]:

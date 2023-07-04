@@ -325,7 +325,7 @@ class TestIVFPQIndex:
         precompute: bool,
         k: int,
     ):
-        torch.manual_seed(0)
+        torch.manual_seed(-1)
         index = IVFPQIndex(
             IVFPQIndex.Config(
                 D,
@@ -353,3 +353,4 @@ class TestIVFPQIndex:
         if isinstance(metric, metrics.L2Metric):
             assert torch.less_equal(dists[:, 0].mean() / D, eps)
             assert torch.equal(idxs[:, 0], torch.arange(Nq))
+
