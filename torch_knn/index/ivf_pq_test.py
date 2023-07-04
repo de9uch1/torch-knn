@@ -40,8 +40,6 @@ class TestIVFPQIndex:
 
     def test_centroids(self):
         index = IVFPQIndex(IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS))
-        with pytest.raises(RuntimeError):
-            index.centroids
         x = torch.rand(N, D)
         index.train(x)
         assert utils.is_equal_shape(index.centroids, [NLISTS, D])

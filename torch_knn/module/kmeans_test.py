@@ -23,8 +23,6 @@ class TestKmeans:
 
     def test_centroids(self):
         kmeans = Kmeans(C, D)
-        with pytest.raises(RuntimeError):
-            kmeans.centroids
         x = torch.rand(N, D)
         kmeans.train(x)
         assert utils.is_equal_shape(kmeans.centroids, [C, D])
@@ -103,8 +101,6 @@ class TestParallelKmeans:
 
     def test_centroids(self):
         kmeans = ParallelKmeans(C, D, M)
-        with pytest.raises(RuntimeError):
-            kmeans.centroids
         x = torch.rand(N, M, D)
         kmeans.train(x)
         assert utils.is_equal_shape(kmeans.centroids, [M, C, D])

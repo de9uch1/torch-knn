@@ -33,13 +33,12 @@ class Kmeans(nn.Module):
         self.dim = dim
         self.metric = metric
         self.init = init
-        self.register_buffer("_centroids", None)
+        self.register_buffer("_centroids", self.init_centroids(init))
+        self.register_buffer("_trained", torch.BoolTensor([False]))
 
     @property
     def centroids(self) -> Tensor:
         """Returns centroids tensor of shape `(ncentroids, dim)`."""
-        if self._centroids is None:
-            raise RuntimeError("Centroids are not trained.")
         return self._centroids
 
     @centroids.setter
@@ -104,7 +103,7 @@ class Kmeans(nn.Module):
     @property
     def is_trained(self) -> bool:
         """Returns whether the centroids are trained or not."""
-        return self._centroids is not None
+        return self._trained
 
     def train(self, x: Tensor, niter: int = 10) -> Tensor:
         """Trains k-means.
@@ -116,8 +115,7 @@ class Kmeans(nn.Module):
         Returns:
             Tensor: Centroids tensor of shape `(ncentroids, dim)`.
         """
-        self.centroids = self.init_centroids(self.init)
-
+        self.centroids = self.centroids.to(x)
         assigns = x.new_full((x.size(0),), fill_value=-1)
         for i in range(niter):
             new_assigns = self.assign(x)
@@ -125,6 +123,7 @@ class Kmeans(nn.Module):
                 break
             assigns = new_assigns
             self.centroids = self.update(x, assigns)
+        self._trained[:] = True
         return self.centroids
 
 
@@ -150,14 +149,12 @@ class ParallelKmeans(Kmeans):
         metric: Metric = L2Metric(),
         init: Kmeans.Init = Kmeans.Init.RANDOM,
     ) -> None:
-        super().__init__(ncentroids, dim, metric=metric, init=init)
         self.nspaces = nspaces
+        super().__init__(ncentroids, dim, metric=metric, init=init)
 
     @property
     def centroids(self) -> Tensor:
         """Returns centroids tensor of shape `(nspaces, ncentroids, dim)`."""
-        if self._centroids is None:
-            raise RuntimeError("Centroids are not trained.")
         return self._centroids
 
     @centroids.setter
@@ -222,9 +219,11 @@ class ParallelKmeans(Kmeans):
             update_mask = is_assigned.any(dim=-1)
             mean_mask = is_assigned[update_mask].unsqueeze(-1).float()
             new_centroids[update_mask, k] = (
-                x[update_mask] * mean_mask / (mean_mask.sum(dim=1, keepdim=True))
-            ).sum(1)
-        return new_centroids.to(dtype)
+                (x[update_mask] * mean_mask / (mean_mask.sum(dim=1, keepdim=True)))
+                .sum(1)
+                .to(dtype)
+            )
+        return new_centroids
 
     def train(self, x: Tensor, niter: int = 10) -> Tensor:
         """Trains k-means.
@@ -236,8 +235,7 @@ class ParallelKmeans(Kmeans):
         Returns:
             Tensor: Centroids tensor of shape `(nspaces, ncentroids, dim)`.
         """
-        self.centroids = self.init_centroids(self.init)
-
+        self.centroids = self.centroids.to(x)
         x = x.transpose(0, 1).contiguous()
         assigns = x.new_full((self.nspaces, x.size(1)), fill_value=-1)
         for i in range(niter):
@@ -246,4 +244,5 @@ class ParallelKmeans(Kmeans):
                 break
             assigns = new_assigns
             self.centroids = self.update(x, assigns)
+        self._trained[:] = True
         return self.centroids

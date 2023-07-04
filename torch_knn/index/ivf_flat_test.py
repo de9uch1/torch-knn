@@ -17,8 +17,6 @@ class TestIVFFlatIndex:
 
     def test_centroids(self):
         index = IVFFlatIndex(IVFFlatIndex.Config(D, nlists=NLISTS))
-        with pytest.raises(RuntimeError):
-            index.centroids
         x = torch.rand(N, D)
         index.train(x)
         assert utils.is_equal_shape(index.centroids, [NLISTS, D])

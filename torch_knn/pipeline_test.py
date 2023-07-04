@@ -140,6 +140,7 @@ class TestPipeline:
         torch.equal(pipeline.transform(x), x + 10)
 
     def test_encode(self):
+        torch.manual_seed(0)
         x = torch.rand(N, D)
         index = LinearFlatIndex(LinearFlatIndex.Config(D))
         pipeline = Pipeline(index)
@@ -150,6 +151,7 @@ class TestPipeline:
         assert torch.equal(pipeline.encode(x), x + 1)
 
     def test_decode(self):
+        torch.manual_seed(0)
         x = torch.rand(N, D)
         index = LinearFlatIndex(LinearFlatIndex.Config(D))
         transform = AddOneTransform(AddOneTransform.Config(D, D))
