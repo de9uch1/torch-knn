@@ -1,6 +1,7 @@
 from typing import List, Tuple, Union
 
 import torch
+import torch.nn as nn
 
 
 def is_equal_shape(
@@ -48,13 +49,6 @@ def pad(tensors: List[torch.Tensor], padding_idx: int) -> torch.Tensor:
     Returns:
         torch.Tensor: Padded tensor.
     """
-    max_len = max(len(t) for t in tensors)
-    new_tensor = torch.full(
-        (len(tensors), max_len),
-        fill_value=padding_idx,
-        dtype=tensors[0].dtype,
-        device=tensors[0].device,
+    return nn.utils.rnn.pad_sequence(
+        tensors, batch_first=True, padding_value=padding_idx
     )
-    for i, t in enumerate(tensors):
-        new_tensor[i, : len(t)] = t
-    return new_tensor
