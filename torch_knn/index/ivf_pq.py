@@ -261,11 +261,11 @@ class IVFPQIndex(LinearPQIndex):
         # term2: Nq x M x ksub
         term2 = torch.einsum(
             "nmd,mkd->nmk", query.view(Nq, self.M, self.dsub), self.codebook
-        )
+        ).contiguous()
 
         # (nprobe * Nq) x M x ksub
         return self.ADTable(
-            (term1[:, :, None, None] + term2[None, :]).view(
+            (term1[:, :, None, None] + term2[None, :, :, :]).view(
                 nprobe * Nq, self.M, self.ksub
             )
         )
@@ -314,7 +314,7 @@ class IVFPQIndex(LinearPQIndex):
         elif isinstance(self.metric, metrics.IPMetric):
             adtable = self.compute_residual_adtable_IP(
                 query, nprobe, transposed_centroid_distances
-            ).view(Nq, nprobe, self.M, self.ksub)
+            ).view(nprobe, Nq, self.M, self.ksub)
         else:
             raise NotImplementedError
 

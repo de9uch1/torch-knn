@@ -258,11 +258,14 @@ class TestIVFPQIndex:
         centroid_indices = torch.arange(NLISTS).repeat((Nq, 1))
         dists = x.new_zeros((Nq, N))
         adtable = index.compute_residual_adtable_L2(
-            xq, NLISTS, centroid_distances, centroid_indices
-        ).view(Nq, NLISTS, M, ksub)
+            xq,
+            NLISTS,
+            centroid_distances.transpose(0, 1).contiguous(),
+            centroid_indices.transpose(0, 1).contiguous(),
+        ).view(NLISTS, Nq, M, ksub)
         for i in range(NLISTS):
             codes = index.data[index.ivf.invlists[i]]
-            dists[:, index.ivf.invlists[i]] = IVFPQIndex.ADTable(adtable[:, i]).lookup(
+            dists[:, index.ivf.invlists[i]] = IVFPQIndex.ADTable(adtable[i]).lookup(
                 codes
             )
 
@@ -298,11 +301,11 @@ class TestIVFPQIndex:
         centroid_distances = index.metric.compute_distance(xq, index.centroids)
         dists = x.new_zeros((Nq, N))
         adtable = index.compute_residual_adtable_IP(
-            xq, NLISTS, centroid_distances
-        ).view(Nq, NLISTS, M, ksub)
+            xq, NLISTS, centroid_distances.transpose(0, 1).contiguous()
+        ).view(NLISTS, Nq, M, ksub)
         for i in range(NLISTS):
             codes = index.data[index.ivf.invlists[i]]
-            dists[:, index.ivf.invlists[i]] = IVFPQIndex.ADTable(adtable[:, i]).lookup(
+            dists[:, index.ivf.invlists[i]] = IVFPQIndex.ADTable(adtable[i]).lookup(
                 codes
             )
 
@@ -353,4 +356,3 @@ class TestIVFPQIndex:
         if isinstance(metric, metrics.L2Metric):
             assert torch.less_equal(dists[:, 0].mean() / D, eps)
             assert torch.equal(idxs[:, 0], torch.arange(Nq))
-

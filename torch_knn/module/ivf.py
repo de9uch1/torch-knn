@@ -35,6 +35,10 @@ class InvertedFile(Kmeans):
         for i in range(self.nlists):
             self.set_invlists(i, state_dict[f"{prefix}_cluster_{i}"])
 
+    @property
+    def invlists(self) -> List[Tensor]:
+        return [getattr(self, f"_cluster_{idx}") for idx in range(self.nlists)]
+
     def get_invlists(self, idx: int) -> Tensor:
         return getattr(self, f"_cluster_{idx}")
 
