@@ -50,7 +50,10 @@ def pad(tensors: List[torch.Tensor], padding_idx: int) -> torch.Tensor:
     """
     max_len = max(len(t) for t in tensors)
     new_tensor = torch.full(
-        (len(tensors), max_len), fill_value=padding_idx, dtype=tensors[0].dtype
+        (len(tensors), max_len),
+        fill_value=padding_idx,
+        dtype=tensors[0].dtype,
+        device=tensors[0].device,
     )
     for i, t in enumerate(tensors):
         new_tensor[i, : len(t)] = t
