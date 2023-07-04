@@ -143,8 +143,8 @@ class IVFPQIndex(LinearPQIndex):
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
         keys = [
-            torch.cat([self.ivf.invlists[c] for c in cents])
-            for cents in centroid_indices.cpu()
+            torch.cat([self.ivf.get_invlists(c) for c in cents])
+            for cents in centroid_indices.cpu().tolist()
         ]
         key_indices = utils.pad(keys, -1)
         Nq, Nk = key_indices.size()
@@ -168,8 +168,8 @@ class IVFPQIndex(LinearPQIndex):
         self,
         query: torch.Tensor,
         nprobe: int,
-        centroid_distances: torch.Tensor,
-        centroid_indices: torch.Tensor,
+        transposed_centroid_distances: torch.Tensor,
+        transposed_centroid_indices: torch.Tensor,
     ) -> PQStorage.ADTable:
         """Computes euclidean distance between a query and keys using residual vectors.
 
@@ -187,42 +187,44 @@ class IVFPQIndex(LinearPQIndex):
         Args:
             query (torch.Tensor): The query vectors of shape `(Nq, D)`.
             nprobe (int): Number of probing clusters.
-            centroid_distances (torch.Tensor): Distances between an input and
-              `nprobe`-centroids of shape `(Nq, nprobe)`.
-            centroid_indices (torch.Tensor): The `nprobe`-nearest centroid IDs of
-              shape `(Nq, nprobe)`.
+            transposed_centroid_distances (torch.Tensor): Distances between an input and
+              `nprobe`-centroids of shape `(nprobe, Nq)`.
+            transposed_centroid_indices (torch.Tensor): The `nprobe`-nearest centroid IDs of
+              shape `(nprobe, Nq)`.
 
         Returns:
-            ADTable: Look up table of shape `(Nq * nprobe, M, ksub)`.
+            ADTable: Look up table of shape `(nprobe * Nq, M, ksub)`.
         """
-        Nq, _ = centroid_distances.size()
-        # term1: Nq x nprobe
-        term1 = centroid_distances / self.M
+        _, Nq = transposed_centroid_distances.size()
+        # term1: nprobe x Nq
+        term1 = transposed_centroid_distances / self.M
 
         if self.precompute_table is not None:
-            term2 = self.precompute_table[centroid_indices]
+            term2 = self.precompute_table[transposed_centroid_indices]
         else:
-            # cr_table: (Nq * nprobe) x M x ksub
+            # cr_table: (nprobe * Nq) x M x ksub
             cr_table = torch.einsum(
                 "nmd,mkd->nmk",
-                self.centroids[centroid_indices].view(Nq * nprobe, self.M, self.dsub),
+                self.centroids[transposed_centroid_indices].view(
+                    nprobe * Nq, self.M, self.dsub
+                ),
                 self.codebook,
             )
             # r_sqnorms: M x ksub
             r_sqnorms = self.codebook.norm(dim=-1) ** 2
-            # term2: (Nq * nprobe) x M x ksub -> Nq x nprobe x M x ksub
+            # term2: (nprobe * Nq) x M x ksub -> nprobe x Nq x M x ksub
             term2 = (2 * cr_table + r_sqnorms[None, :]).view(
-                Nq, nprobe, self.M, self.ksub
+                nprobe, Nq, self.M, self.ksub
             )
         # term3: Nq x M x ksub
         term3 = -2 * torch.einsum(
             "nmd,mkd->nmk", query.view(Nq, self.M, self.dsub), self.codebook
         )
 
-        # (Nq * nprobe) x M x ksub
+        # (nprobe * Nq) x M x ksub
         return self.ADTable(
-            (term1[:, :, None, None] + term2 + term3[:, None]).view(
-                Nq * nprobe, self.M, self.ksub
+            (term1[:, :, None, None] + term2 + term3[None, :]).view(
+                nprobe * Nq, self.M, self.ksub
             )
         )
 
@@ -230,7 +232,7 @@ class IVFPQIndex(LinearPQIndex):
         self,
         query: torch.Tensor,
         nprobe: int,
-        centroid_distances: torch.Tensor,
+        transposed_centroid_distances: torch.Tensor,
     ) -> PQStorage.ADTable:
         """Computes inner product between a query and keys using residual vectors.
 
@@ -247,24 +249,24 @@ class IVFPQIndex(LinearPQIndex):
         Args:
             query (torch.Tensor): The query vectors of shape `(Nq, D)`.
             nprobe (int): Number of probing clusters.
-            centroid_distances (torch.Tensor): Distances between an input and
-              `nprobe`-centroids of shape `(Nq, nprobe)`.
+            transposed_centroid_distances (torch.Tensor): Distances between an input and
+              `nprobe`-centroids of shape `(nprobe, Nq)`.
 
         Returns:
-            ADTable: Look up table of shape `(Nq * nprobe, M, ksub)`.
+            ADTable: Look up table of shape `(nprobe * Nq, M, ksub)`.
         """
-        Nq, _ = centroid_distances.size()
-        # term1: Nq x nprobe
-        term1 = centroid_distances / self.M
+        _, Nq = transposed_centroid_distances.size()
+        # term1: nprobe x Nq
+        term1 = transposed_centroid_distances / self.M
         # term2: Nq x M x ksub
         term2 = torch.einsum(
             "nmd,mkd->nmk", query.view(Nq, self.M, self.dsub), self.codebook
         )
 
-        # (Nq * nprobe) x M x ksub
+        # (nprobe * Nq) x M x ksub
         return self.ADTable(
-            (term1[:, :, None, None] + term2[:, None]).view(
-                Nq * nprobe, self.M, self.ksub
+            (term1[:, :, None, None] + term2[None, :]).view(
+                nprobe * Nq, self.M, self.ksub
             )
         )
 
@@ -286,7 +288,7 @@ class IVFPQIndex(LinearPQIndex):
             nprobe (int): Number of probing clusters.
             centroid_distances (torch.Tensor): Distance between a query and the
               nprobe-nearest centroids of shape `(Nq, nprobe)`.
-            centroid_distances (torch.Tensor): Indices of the nprobe-nearest centroids
+            centroid_indices (torch.Tensor): Indices of the nprobe-nearest centroids
               of shape `(Nq, nprobe)`.
 
         Returns:
@@ -294,30 +296,42 @@ class IVFPQIndex(LinearPQIndex):
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
+        # Speed up:
+        # PQ codes are looked up for each cluster.
+        # Thus, we transpose the LUT and set the outer dimensioin as `nprobe`.
+        # The LUT is contiguously represented on the memory.
+        transposed_centroid_distances = centroid_distances.transpose(0, 1).contiguous()
+        transposed_centroid_indices = centroid_indices.transpose(0, 1).contiguous()
+
         Nq = query.size(0)
+        if isinstance(self.metric, metrics.L2Metric):
+            adtable = self.compute_residual_adtable_L2(
+                query,
+                nprobe,
+                transposed_centroid_distances,
+                transposed_centroid_indices,
+            ).view(nprobe, Nq, self.M, self.ksub)
+        elif isinstance(self.metric, metrics.IPMetric):
+            adtable = self.compute_residual_adtable_IP(
+                query, nprobe, transposed_centroid_distances
+            ).view(Nq, nprobe, self.M, self.ksub)
+        else:
+            raise NotImplementedError
+
         cand_distances = centroid_distances.new_empty(Nq, nprobe, k).fill_(
             self.metric.farthest_value
         )
         cand_indices = centroid_indices.new_empty(Nq, nprobe, k).fill_(-1)
 
-        if isinstance(self.metric, metrics.L2Metric):
-            adtable = self.compute_residual_adtable_L2(
-                query, nprobe, centroid_distances, centroid_indices
-            ).view(Nq, nprobe, self.M, self.ksub)
-        elif isinstance(self.metric, metrics.IPMetric):
-            adtable = self.compute_residual_adtable_IP(
-                query, nprobe, centroid_distances
-            ).view(Nq, nprobe, self.M, self.ksub)
-        else:
-            raise NotImplementedError
-
-        centroid_indices = centroid_indices.cpu()
+        # Convert the neighboring centroid indices to a list for faster retrieval
+        # from the inverted file.
+        transposed_centroid_indices = transposed_centroid_indices.cpu().tolist()
         for i in range(nprobe):
             key_indices = utils.pad(
-                [self.ivf.invlists[c] for c in centroid_indices[:, i]], -1
+                [self.ivf.get_invlists(c) for c in transposed_centroid_indices[i]], -1
             )
             # data[key_indices]: Nq x Nk x M
-            distances = self.ADTable(adtable[:, i]).lookup(self.data[key_indices])
+            distances = self.ADTable(adtable[i]).lookup(self.data[key_indices])
             distances = self.metric.mask(distances, key_indices.eq(-1))
             cand_len = min(k, distances.size(1))
             k_cand_distances, k_cand_probed_indices = self.metric.topk(

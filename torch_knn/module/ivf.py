@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import torch
 from torch import Tensor
@@ -25,7 +25,21 @@ class InvertedFile(Kmeans):
         self.metric = cfg.metric
         self.nlists = nlists
         self.N = storage.N
-        self.invlists: List[Tensor] = [Tensor().long() for _ in range(nlists)]
+        for i in range(nlists):
+            self.register_buffer(f"_cluster_{i}", Tensor().long())
+        self._register_load_state_dict_pre_hook(self._load_state_dict_hook)
+
+    def _load_state_dict_hook(
+        self, state_dict: Dict[str, Any], prefix: str, *args, **kwargs
+    ):
+        for i in range(self.nlists):
+            self.set_invlists(i, state_dict[f"{prefix}_cluster_{i}"])
+
+    def get_invlists(self, idx: int) -> Tensor:
+        return getattr(self, f"_cluster_{idx}")
+
+    def set_invlists(self, idx: int, value: Tensor) -> None:
+        setattr(self, f"_cluster_{idx}", value)
 
     def add(self, x: Tensor) -> Tensor:
         """Adds the given vectors to the inverted file.
@@ -39,15 +53,14 @@ class InvertedFile(Kmeans):
         assignments = self.assign(x)
         for cluster_idx in range(self.nlists):
             data_idx = assignments.eq(cluster_idx).nonzero()[:, 0] + self.N
-            self.invlists[cluster_idx] = torch.cat(
-                [self.invlists[cluster_idx], data_idx.cpu()]
+            self.set_invlists(
+                cluster_idx, torch.cat([self.get_invlists(cluster_idx), data_idx])
             )
         self.N += len(assignments)
         return assignments
 
-    def get_extra_state(self) -> Tuple[List[Tensor], int]:
-        return (self.invlists, self.N)
+    def get_extra_state(self) -> int:
+        return self.N
 
-    def set_extra_state(self, extra_state: Tuple[List[Tensor], int]) -> None:
-        self.invlists = extra_state[0]
-        self.N = extra_state[1]
+    def set_extra_state(self, extra_state: int) -> None:
+        self.N = extra_state

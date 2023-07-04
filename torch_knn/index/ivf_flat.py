@@ -85,8 +85,8 @@ class IVFFlatIndex(FlatStorage, Index):
         coarse_distances = self.metric.compute_distance(query, self.centroids)
         _, centroid_indices = self.metric.topk(coarse_distances, k=nprobe)
         keys = [
-            torch.cat([self.ivf.invlists[i] for i in cents])
-            for cents in centroid_indices.cpu()
+            torch.cat([self.ivf.get_invlists(i) for i in cents])
+            for cents in centroid_indices.cpu().tolist()
         ]
         key_indices = utils.pad(keys, -1)
         Nq, Nk = key_indices.size()
