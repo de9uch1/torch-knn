@@ -104,8 +104,14 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
 
     def set_extra_state(self, extra_state):
         """Gets extra state."""
-        self.cfg = extra_state["cfg"]
+        self.cfg = self.Config(**extra_state["cfg"])
 
     def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
         self._data = state_dict["_data"]
         return super().load_state_dict(state_dict, strict)
+
+    @classmethod
+    def load(cls, state_dict: Mapping[str, Any], strict: bool = True):
+        self = cls(cls.Config(**state_dict["_extra_state"]["cfg"]))
+        self.load_state_dict(state_dict, strict)
+        return self
