@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 import torch
 
@@ -23,7 +22,8 @@ class PQStorage(Storage):
     def __init__(self, cfg: "PQStorage.Config"):
         super().__init__(cfg)
         self._data = self.data.to(cfg.code_dtype)
-        self.register_buffer("_codebook", None)
+        self.register_buffer("_codebook", torch.rand(self.M, self.ksub, self.dsub))
+        self.register_buffer("_trained", torch.BoolTensor([False]))
 
     @dataclass
     class Config(Storage.Config):
@@ -66,8 +66,6 @@ class PQStorage(Storage):
     @property
     def codebook(self) -> torch.Tensor:
         """PQ codebook of shape `(M, ksub, dsub)`."""
-        if self._codebook is None:
-            raise RuntimeError("The storage must be trained.")
         return self._codebook
 
     @codebook.setter
@@ -124,7 +122,7 @@ class PQStorage(Storage):
     @property
     def is_trained(self) -> bool:
         """Returns whether the storage is trained or not."""
-        return self._codebook is not None
+        return self._trained
 
     def train(self, x: torch.Tensor) -> "PQStorage":
         """Trains the index with the given vectors.
@@ -139,6 +137,7 @@ class PQStorage(Storage):
         self._codebook = kmeans.train(
             x.view(x.size(0), self.M, self.dsub), self.cfg.train_niter
         )
+        self._trained[:] = True
         return self
 
     class ADTable(torch.Tensor):

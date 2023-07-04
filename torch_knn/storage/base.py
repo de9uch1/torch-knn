@@ -1,5 +1,6 @@
 import abc
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from typing import Any, Mapping
 
 import torch
 import torch.nn as nn
@@ -96,3 +97,15 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
             x (torch.Tensor): The input vectors of shape `(N, D)`.
         """
         self._data = torch.cat([self.data, self.encode(x)])
+
+    def get_extra_state(self):
+        """Gets extra state."""
+        return {"cfg": asdict(self.cfg)}
+
+    def set_extra_state(self, extra_state):
+        """Gets extra state."""
+        self.cfg = extra_state["cfg"]
+
+    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
+        self._data = state_dict["_data"]
+        return super().load_state_dict(state_dict, strict)
