@@ -102,7 +102,7 @@ class Kmeans(nn.Module):
                 new_centroids[k] = x[assigns == k].mean(dim=0)
         return new_centroids
 
-    def train(self, x: Tensor, niter: int = 50) -> Tensor:
+    def fit(self, x: Tensor, niter: int = 50) -> Tensor:
         """Trains k-means.
 
         Args:
@@ -226,7 +226,7 @@ class ParallelKmeans(Kmeans):
             )
         return new_centroids
 
-    def train(self, x: Tensor, niter: int = 50) -> Tensor:
+    def fit(self, x: Tensor, niter: int = 50) -> Tensor:
         """Trains k-means.
 
         Args:

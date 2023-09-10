@@ -84,7 +84,7 @@ class Pipeline(nn.Module):
             x = t.decode(x)
         return x
 
-    def train(self, x: Tensor) -> "Pipeline":
+    def fit(self, x: Tensor) -> "Pipeline":
         """Trains the pipeline with the given vectors.
 
         Args:
@@ -94,9 +94,9 @@ class Pipeline(nn.Module):
             Pipeline: The pipeline object.
         """
         for t in self.pre_transforms:
-            t.train(x)
+            t.fit(x)
             x = t.encode(x)
-        self.index.train(x)
+        self.index.fit(x)
         return self
 
     def add(self, x: Tensor) -> None:

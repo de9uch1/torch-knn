@@ -19,7 +19,7 @@ class TestLinearPQIndex:
         torch.manual_seed(0)
         x = torch.rand(N, D)
         index = LinearPQIndex(LinearPQIndex.Config(D, metric=metric, M=M, ksub=ksub))
-        index.train(x)
+        index.fit(x)
         index.add(x)
         xq = x[:Nq]
         dists, idxs = index.search(xq, k=k)

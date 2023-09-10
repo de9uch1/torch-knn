@@ -40,7 +40,7 @@ class IVFFlatIndex(FlatStorage, Index):
         """Returns centroid tensor of shape `(nlists, D)`"""
         return self.ivf.centroids
 
-    def train(self, x: torch.Tensor) -> "IVFFlatIndex":
+    def fit(self, x: torch.Tensor) -> "IVFFlatIndex":
         """Trains the index with the given vectors.
 
         Args:
@@ -49,7 +49,7 @@ class IVFFlatIndex(FlatStorage, Index):
         Returns:
             IVFFlatIndex: The index object.
         """
-        self.ivf.train(x, niter=self.cfg.train_ivf_niter)
+        self.ivf.fit(x, niter=self.cfg.train_ivf_niter)
         return self
 
     def add(self, x: torch.Tensor) -> None:

@@ -41,7 +41,7 @@ class TestIVFPQIndex:
     def test_centroids(self):
         index = IVFPQIndex(IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS))
         x = torch.rand(N, D)
-        index.train(x)
+        index.fit(x)
         assert utils.is_equal_shape(index.centroids, [NLISTS, D])
 
     @pytest.mark.parametrize("residual", [True, False])
@@ -50,7 +50,7 @@ class TestIVFPQIndex:
             IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS, residual=residual)
         )
         x = torch.rand(N, D)
-        index.ivf.train(x)
+        index.ivf.fit(x)
         if not residual:
             assert torch.equal(index.compute_residual(x), x)
         else:
@@ -63,7 +63,7 @@ class TestIVFPQIndex:
     @pytest.mark.parametrize("residual", [True, False])
     @pytest.mark.parametrize("metric", [metrics.L2Metric(), metrics.IPMetric()])
     @pytest.mark.parametrize("precompute", [True, False])
-    def test_train(self, residual: bool, metric: metrics.Metric, precompute: bool):
+    def test_fit(self, residual: bool, metric: metrics.Metric, precompute: bool):
         index = IVFPQIndex(
             IVFPQIndex.Config(
                 D,
@@ -76,7 +76,7 @@ class TestIVFPQIndex:
             )
         )
         x = torch.rand(N, D)
-        index.train(x)
+        index.fit(x)
         assert index.ivf.centroids is not None and utils.is_equal_shape(
             index.ivf.centroids, [NLISTS, D]
         )
@@ -94,7 +94,7 @@ class TestIVFPQIndex:
         )
         index = IVFPQIndex(cfg)
         x = torch.rand(N, D)
-        index.train(x)
+        index.fit(x)
         assert index.precompute_table is None
         table = index.build_precompute_table()
         if not residual or not isinstance(metric, metrics.L2Metric):
@@ -130,7 +130,7 @@ class TestIVFPQIndex:
             IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS, residual=residual)
         )
         x = torch.rand(N, D)
-        index.train(x)
+        index.fit(x)
         assert index.ivf.centroids is not None
         assert index.N == 0
         index.add(x)
@@ -152,16 +152,16 @@ class TestIVFPQIndex:
             )
         )
         x = torch.rand(N, D)
-        ivfpq_index.ivf.train(x)
+        ivfpq_index.ivf.fit(x)
         torch.manual_seed(0)
-        super(IVFPQIndex, ivfpq_index).train(x)
+        super(IVFPQIndex, ivfpq_index).fit(x)
         ivfpq_index.add(x)
 
         linearpq_index = LinearPQIndex(
             LinearPQIndex.Config(D=D, metric=metric, M=M, ksub=ksub)
         )
         torch.manual_seed(0)
-        linearpq_index.train(x)
+        linearpq_index.fit(x)
         linearpq_index.add(x)
 
         xq = torch.rand(Nq, D)
@@ -194,7 +194,7 @@ class TestIVFPQIndex:
         )
         torch.manual_seed(0)
         x = torch.rand(N, D)
-        ivfpq_index.train(x)
+        ivfpq_index.fit(x)
         ivfpq_index.add(x)
 
         xq = x[:Nq]
@@ -238,7 +238,7 @@ class TestIVFPQIndex:
         )
         torch.manual_seed(0)
         x = torch.rand(N, D)
-        index.train(x)
+        index.fit(x)
         index.add(x)
 
         recons_data = x.new_zeros((N, D))
@@ -282,7 +282,7 @@ class TestIVFPQIndex:
         )
         torch.manual_seed(0)
         x = torch.rand(N, D)
-        index.train(x)
+        index.fit(x)
         index.add(x)
 
         recons_data = x.new_zeros((N, D))
@@ -334,7 +334,7 @@ class TestIVFPQIndex:
         )
         x = torch.rand(N, D)
         xq = x[:Nq]
-        index.train(x)
+        index.fit(x)
         index.add(x)
         dists, idxs = index.search(xq, k=k, nprobe=nprobe)
         # Shape

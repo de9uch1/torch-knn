@@ -30,12 +30,12 @@ class TestOPQTransform:
         assert torch.equal(opq.weight, x)
 
     @pytest.mark.parametrize(["d_in", "d_out"], [(8, 8), (16, 16), (16, 8)])
-    def test_train(self, d_in: int, d_out: int):
+    def test_fit(self, d_in: int, d_out: int):
         cfg = OPQTransform.Config(d_in, d_out, M=M, ksub=KSUB, train_niter=50)
         opq = OPQTransform(cfg)
         torch.manual_seed(0)
         x = torch.rand(N, d_in)
-        opq.train(x)
+        opq.fit(x)
 
         # Checks the orthogonal matrices
         if d_in >= d_out:
@@ -48,7 +48,7 @@ class TestOPQTransform:
         opq = OPQTransform(cfg)
         torch.manual_seed(0)
         x = torch.rand(N, D_IN)
-        opq.train(x)
+        opq.fit(x)
         assert utils.is_equal_shape(opq.encode(x), [N, D_OUT])
 
     def test_decode(self):
@@ -56,6 +56,6 @@ class TestOPQTransform:
         opq = OPQTransform(cfg)
         torch.manual_seed(0)
         x = torch.rand(N, D_IN)
-        opq.train(x)
+        opq.fit(x)
         assert utils.is_equal_shape(opq.decode(torch.rand(N, D_OUT)), [N, D_IN])
         torch.testing.assert_close(opq.decode(opq.encode(x)), x)

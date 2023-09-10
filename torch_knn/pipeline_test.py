@@ -15,7 +15,7 @@ class AddOneTransform(Transform):
 
     cfg: Transform.Config
 
-    def train(self, x) -> "AddOneTransform":
+    def fit(self, x) -> "AddOneTransform":
         """Trains vector transformation for this class.
 
         Args:
@@ -53,7 +53,7 @@ class LearnedTransform(AddOneTransform):
     def __init__(self, cfg: "Transform.Config") -> None:
         super().__init__(cfg)
 
-    def train(self, x) -> "LearnedTransform":
+    def fit(self, x) -> "LearnedTransform":
         """Trains vector transformation for this class.
 
         Args:
@@ -146,28 +146,28 @@ class TestPipeline:
         pipeline = Pipeline(index, [transform])
         torch.testing.assert_close(pipeline.decode(pipeline.encode(x)), x)
 
-    def test_train(self):
+    def test_fit(self):
         x = torch.rand(N, D)
         index = LinearPQIndex(LinearPQIndex.Config(D, M=D // 2, ksub=4))
         torch.manual_seed(0)
-        index.train(x)
+        index.fit(x)
         expected_codebook = index.codebook
 
         pipeline = Pipeline(index)
         torch.manual_seed(0)
-        pipeline.train(x)
+        pipeline.fit(x)
         assert torch.equal(pipeline.index.codebook, expected_codebook)
 
         transform = AddOneTransform(AddOneTransform.Config(D, D))
         pipeline = Pipeline(index, [transform])
         torch.manual_seed(0)
-        pipeline.train(x - 1)
+        pipeline.fit(x - 1)
         assert torch.equal(pipeline.index.codebook, expected_codebook)
 
         index = LinearPQIndex(LinearPQIndex.Config(D, M=D // 2, ksub=4))
         transform = LearnedTransform(LearnedTransform.Config(D, D))
         pipeline = Pipeline(index, [transform])
-        pipeline.train(x)
+        pipeline.fit(x)
 
     def test_add(self):
         x = torch.rand(N, D)

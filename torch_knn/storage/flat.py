@@ -45,7 +45,7 @@ class FlatStorage(Storage):
         """
         return x
 
-    def train(self, x: torch.Tensor) -> "FlatStorage":
+    def fit(self, x: torch.Tensor) -> "FlatStorage":
         """Trains the index with the given vectors.
 
         Args:

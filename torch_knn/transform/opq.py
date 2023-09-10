@@ -48,7 +48,7 @@ class OPQTransform(Transform):
         """Sets the weight matrix of shape `(d_in, d_out)`."""
         self._weight = x
 
-    def train(self, x) -> "OPQTransform":
+    def fit(self, x) -> "OPQTransform":
         """Trains vector transformation for this class.
 
         Args:
@@ -76,7 +76,7 @@ class OPQTransform(Transform):
 
             # TODO(deguchi): Set manual seed
             torch.manual_seed(0)
-            pq.train(x_proj)
+            pq.fit(x_proj)
             recons = pq.decode(pq.encode(x_proj))
             U, s, Vt = LA.svd(recons.T @ x, full_matrices=False)
             self.weight = U @ Vt

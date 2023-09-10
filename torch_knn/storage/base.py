@@ -75,7 +75,7 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def train(self, x: torch.Tensor) -> "Storage":
+    def fit(self, x: torch.Tensor) -> "Storage":
         """Trains the index with the given vectors.
 
         Args:

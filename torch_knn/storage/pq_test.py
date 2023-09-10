@@ -40,7 +40,7 @@ class TestPQStorage:
     def test_codebook(self):
         storage = PQStorage(PQStorage.Config(D, M=M, ksub=ksub))
         x = torch.rand(N, D)
-        storage.train(x)
+        storage.fit(x)
         assert utils.is_equal_shape(storage.codebook, [M, ksub, dsub])
 
         storage = PQStorage(PQStorage.Config(D, M=M, ksub=ksub))
@@ -56,7 +56,7 @@ class TestPQStorage:
         cfg = PQStorage.Config(D, M=M, ksub=ksub)
         x = torch.rand(N, D)
         storage = PQStorage(cfg)
-        storage.train(x)
+        storage.fit(x)
         codes = storage.encode(x)
         assert utils.is_equal_shape(codes, [N, M])
         torch.testing.assert_close(
@@ -76,7 +76,7 @@ class TestPQStorage:
         storage = PQStorage(cfg)
         with pytest.raises(RuntimeError):
             storage.decode(x)
-        storage.train(x)
+        storage.fit(x)
         codes = storage.encode(x)
 
         with pytest.raises(RuntimeError):
@@ -97,16 +97,16 @@ class TestPQStorage:
             (torch.rand(N * M, dsub), pytest.raises(RuntimeError)),
         ],
     )
-    def test_train(self, x, exception):
+    def test_fit(self, x, exception):
         cfg = PQStorage.Config(D, M=M, ksub=ksub)
         storage = PQStorage(cfg)
         torch.manual_seed(0)
         with exception:
-            storage = storage.train(x)
+            storage = storage.fit(x)
         if exception == does_not_raise():
             torch.manual_seed(0)
             kmeans = ParallelKmeans(ksub, dsub, M)
-            codebook = kmeans.train(x.view(N, M, dsub))
+            codebook = kmeans.fit(x.view(N, M, dsub))
             torch.testing.assert_close(storage.codebook, codebook)
 
     class TestADTable:
@@ -146,7 +146,7 @@ class TestPQStorage:
         cfg = PQStorage.Config(D, M=M, ksub=ksub)
         x = torch.rand(N, D)
         storage = PQStorage(cfg)
-        storage.train(x)
+        storage.fit(x)
         codes = storage.encode(x)
         assert utils.is_equal_shape(codes, [N, M])
         adtable = storage.compute_adtable(x)
@@ -159,7 +159,7 @@ class TestPQStorage:
         x = torch.rand(N, D)
         cfg = PQStorage.Config(D, M=M, ksub=ksub)
         storage = PQStorage(cfg)
-        storage.train(x)
+        storage.fit(x)
         adtable = storage.compute_adtable(x)
         adists = adtable.lookup(storage.encode(x))
         assert utils.is_equal_shape(adists, [N, N])

@@ -35,12 +35,12 @@ class TestPCATransform:
         assert torch.equal(pca.mean, x)
 
     @pytest.mark.parametrize(["d_in", "d_out"], [(8, 8), (16, 16), (16, 8)])
-    def test_train(self, d_in: int, d_out: int):
+    def test_fit(self, d_in: int, d_out: int):
         cfg = PCATransform.Config(d_in, d_out)
         pca = PCATransform(cfg)
         torch.manual_seed(0)
         x = torch.rand(N, d_in)
-        pca.train(x)
+        pca.fit(x)
 
         assert utils.is_equal_shape(pca.weight, [d_in, d_out])
 
@@ -53,7 +53,7 @@ class TestPCATransform:
         pca = PCATransform(cfg)
         torch.manual_seed(0)
         x = torch.rand(N, D_IN)
-        pca.train(x)
+        pca.fit(x)
         assert utils.is_equal_shape(pca.encode(x), [N, D_OUT])
 
     def test_decode(self):
@@ -61,6 +61,6 @@ class TestPCATransform:
         pca = PCATransform(cfg)
         torch.manual_seed(0)
         x = torch.rand(N, D_IN)
-        pca.train(x)
+        pca.fit(x)
         assert utils.is_equal_shape(pca.decode(torch.rand(N, D_OUT)), [N, D_IN])
         torch.testing.assert_close(pca.decode(pca.encode(x)), x)

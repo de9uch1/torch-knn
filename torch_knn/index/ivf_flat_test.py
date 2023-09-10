@@ -18,13 +18,13 @@ class TestIVFFlatIndex:
     def test_centroids(self):
         index = IVFFlatIndex(IVFFlatIndex.Config(D, nlists=NLISTS))
         x = torch.rand(N, D)
-        index.train(x)
+        index.fit(x)
         assert utils.is_equal_shape(index.centroids, [NLISTS, D])
 
-    def test_train(self):
+    def test_fit(self):
         index = IVFFlatIndex(IVFFlatIndex.Config(D, nlists=NLISTS))
         x = torch.rand(N, D)
-        index.train(x)
+        index.fit(x)
         assert index.ivf.centroids is not None and utils.is_equal_shape(
             index.ivf.centroids, [NLISTS, D]
         )
@@ -32,7 +32,7 @@ class TestIVFFlatIndex:
     def test_add(self):
         index = IVFFlatIndex(IVFFlatIndex.Config(D, nlists=NLISTS))
         x = torch.rand(N, D)
-        index.train(x)
+        index.fit(x)
         assert index.N == 0
         index.add(x)
         assert index.N == N
@@ -48,7 +48,7 @@ class TestIVFFlatIndex:
         torch.manual_seed(0)
         index = IVFFlatIndex(IVFFlatIndex.Config(D, metric=metric, nlists=NLISTS))
         x = torch.rand(N, D)
-        index.train(x)
+        index.fit(x)
         index.add(x)
         dists, idxs = index.search(x, k=k, nprobe=nprobe)
         assert utils.is_equal_shape(dists, idxs)

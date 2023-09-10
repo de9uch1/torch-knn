@@ -18,13 +18,13 @@ class TestFlatStorage:
         storage = FlatStorage(cfg)
         torch.testing.assert_close(storage.decode(x), x)
 
-    def test_train(self):
+    def test_fit(self):
         cfg = FlatStorage.Config(D)
         x = torch.rand(3, D)
         storage = FlatStorage(cfg)
-        assert storage.train(x) is storage
+        assert storage.fit(x) is storage
 
         cfg = FlatStorage.Config(D)
         x = torch.rand(3, D)
         storage = FlatStorage(cfg)
-        torch.testing.assert_close(storage.train(x).data, storage.data)
+        torch.testing.assert_close(storage.fit(x).data, storage.data)

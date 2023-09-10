@@ -118,7 +118,7 @@ class PQStorage(Storage):
         # x: N x M x dsub -> N x D
         return x.view(N, self.D)
 
-    def train(self, x: torch.Tensor) -> "PQStorage":
+    def fit(self, x: torch.Tensor) -> "PQStorage":
         """Trains the index with the given vectors.
 
         Args:
@@ -128,7 +128,7 @@ class PQStorage(Storage):
             PQStorage: The storage object.
         """
         kmeans = ParallelKmeans(self.ksub, self.dsub, self.M)
-        self._codebook = kmeans.train(
+        self._codebook = kmeans.fit(
             x.view(x.size(0), self.M, self.dsub), niter=self.cfg.train_niter
         )
         return self

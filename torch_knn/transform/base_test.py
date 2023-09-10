@@ -7,7 +7,7 @@ from torch_knn.transform.base import Transform
 
 
 class TransformMock(Transform):
-    def train(self, x) -> Transform:
+    def fit(self, x) -> Transform:
         """Trains vector transformation for this class.
 
         Args:

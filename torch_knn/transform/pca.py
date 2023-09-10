@@ -48,7 +48,7 @@ class PCATransform(Transform):
         """Sets the mean weights of shape `(d_in,)`."""
         self._mean = x
 
-    def train(self, x) -> "PCATransform":
+    def fit(self, x) -> "PCATransform":
         """Trains vector transformation for this class.
 
         Args:

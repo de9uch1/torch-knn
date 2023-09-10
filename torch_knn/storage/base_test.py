@@ -14,7 +14,7 @@ class StorageMock(Storage):
     def decode(self, x):
         return x
 
-    def train(self, x):
+    def fit(self, x):
         return self
 
 
