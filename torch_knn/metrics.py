@@ -74,6 +74,12 @@ class L2Metric(Metric):
     def compute_distance(a: Tensor, b: Tensor) -> Tensor:
         """Computes distance between two vectors.
 
+        This method uses `torch.cdist()`, which switches the following two modes
+        according to the sizes of the input tensors for the computation performance.
+
+        - SIMD-based: Compute :math:`||a - b||`
+        - BLAS-based: Compute :math:`||a||, ||b||`, and :math:`-2ab^T`
+
         Args:
             a (torch.Tensor): Input vectors of shape `(n, dim)` or `(b, n, dim)`.
             b (torch.Tensor): Input vectors of shape `(m, dim)` or `(b, m, dim)`.
