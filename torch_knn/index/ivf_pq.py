@@ -49,11 +49,6 @@ class IVFPQIndex(LinearPQIndex):
         """Returns centroid tensor of shape `(nlists, D)`"""
         return self.ivf.centroids
 
-    @property
-    def is_trained(self) -> bool:
-        """Returns whether the index is trained or not."""
-        return super().is_trained and self.ivf.is_trained
-
     def compute_residual(self, x: torch.Tensor) -> torch.Tensor:
         """Computes residual vectors from the assigned centorids.
 
@@ -77,7 +72,7 @@ class IVFPQIndex(LinearPQIndex):
             x (torch.Tensor): The input vectors of shape `(N, D)`.
 
         Returns:
-            IVFFlatIndex: The trained index object.
+            IVFFlatIndex: The index object.
         """
         self.ivf.train(x, niter=self.cfg.train_ivf_niter)
         pq_training_vectors = self.compute_residual(x)

@@ -7,11 +7,6 @@ from torch_knn.transform.base import Transform
 
 
 class TransformMock(Transform):
-    @property
-    def is_trained(self) -> bool:
-        """Returns whether this class is trained or not."""
-        return True
-
     def train(self, x) -> Transform:
         """Trains vector transformation for this class.
 
@@ -19,7 +14,7 @@ class TransformMock(Transform):
             x (Tensor): Training vectors of shape `(n, d_in)`.
 
         Returns:
-            Transform: Trained this class.
+            Transform: This class.
         """
         return self
 

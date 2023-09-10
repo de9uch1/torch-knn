@@ -21,18 +21,10 @@ class TestIVFFlatIndex:
         index.train(x)
         assert utils.is_equal_shape(index.centroids, [NLISTS, D])
 
-    def test_is_trained(self):
-        index = IVFFlatIndex(IVFFlatIndex.Config(D, nlists=NLISTS))
-        x = torch.rand(N, D)
-        assert not index.is_trained
-        index.ivf.train(x)
-        assert index.is_trained
-
     def test_train(self):
         index = IVFFlatIndex(IVFFlatIndex.Config(D, nlists=NLISTS))
         x = torch.rand(N, D)
         index.train(x)
-        assert index.ivf.is_trained and index.is_trained
         assert index.ivf.centroids is not None and utils.is_equal_shape(
             index.ivf.centroids, [NLISTS, D]
         )

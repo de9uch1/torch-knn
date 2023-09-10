@@ -23,7 +23,6 @@ class PQStorage(Storage):
         super().__init__(cfg)
         self._data = self.data.to(cfg.code_dtype)
         self.register_buffer("_codebook", torch.rand(self.M, self.ksub, self.dsub))
-        self.register_buffer("_trained", torch.BoolTensor([False]))
 
     @dataclass
     class Config(Storage.Config):
@@ -119,11 +118,6 @@ class PQStorage(Storage):
         # x: N x M x dsub -> N x D
         return x.view(N, self.D)
 
-    @property
-    def is_trained(self) -> bool:
-        """Returns whether the storage is trained or not."""
-        return self._trained
-
     def train(self, x: torch.Tensor) -> "PQStorage":
         """Trains the index with the given vectors.
 
@@ -131,13 +125,12 @@ class PQStorage(Storage):
             x (torch.Tensor): The input vectors of shape `(N, D)`.
 
         Returns:
-            PQStorage: The trained storage object.
+            PQStorage: The storage object.
         """
         kmeans = ParallelKmeans(self.ksub, self.dsub, self.M)
         self._codebook = kmeans.train(
             x.view(x.size(0), self.M, self.dsub), niter=self.cfg.train_niter
         )
-        self._trained[:] = True
         return self
 
     class ADTable(torch.Tensor):

@@ -84,11 +84,6 @@ class Pipeline(nn.Module):
             x = t.decode(x)
         return x
 
-    @property
-    def is_trained(self) -> bool:
-        """Returns whether the pipeline is trained or not."""
-        return all(t.is_trained for t in self.pre_transforms) and self.index.is_trained
-
     def train(self, x: Tensor) -> "Pipeline":
         """Trains the pipeline with the given vectors.
 
@@ -96,7 +91,7 @@ class Pipeline(nn.Module):
             x (torch.Tensor): The input vectors of shape `(N, D)`.
 
         Returns:
-            Pipeline: The trained pipeline object.
+            Pipeline: The pipeline object.
         """
         for t in self.pre_transforms:
             t.train(x)

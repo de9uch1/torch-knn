@@ -17,10 +17,6 @@ class StorageMock(Storage):
     def train(self, x):
         return self
 
-    @property
-    def is_trained(self):
-        return True
-
 
 class TestStorage:
     def test___init__(self):

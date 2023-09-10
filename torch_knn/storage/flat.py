@@ -52,11 +52,6 @@ class FlatStorage(Storage):
             x (torch.Tensor): The input vectors of shape `(N, D)`.
 
         Returns:
-            FlatStorage: The trained storage object.
+            FlatStorage: The storage object.
         """
         return self
-
-    @property
-    def is_trained(self) -> bool:
-        """Returns whether the storage is trained or not."""
-        return True

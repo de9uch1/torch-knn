@@ -23,11 +23,6 @@ class Transform(nn.Module, metaclass=abc.ABCMeta):
         d_in: int
         d_out: int
 
-    @property
-    @abc.abstractmethod
-    def is_trained(self) -> bool:
-        """Returns whether this class is trained or not."""
-
     @abc.abstractmethod
     def train(self, x) -> "Transform":
         """Trains vector transformation for this class.
@@ -36,7 +31,7 @@ class Transform(nn.Module, metaclass=abc.ABCMeta):
             x (Tensor): Training vectors of shape `(n, d_in)`.
 
         Returns:
-            Transform: Trained this class.
+            Transform: This class.
         """
 
     @abc.abstractmethod

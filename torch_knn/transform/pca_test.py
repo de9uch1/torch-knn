@@ -15,8 +15,6 @@ class TestPCATransform:
         pca = PCATransform(cfg)
         assert pca.cfg.d_in == D_IN
         assert pca.cfg.d_out == D_OUT
-        assert pca._weight is None
-        assert pca._mean is None
 
     class TestConfig:
         with pytest.raises(ValueError):
@@ -25,9 +23,6 @@ class TestPCATransform:
     def test_weight(self):
         cfg = PCATransform.Config(D_IN, D_OUT)
         pca = PCATransform(cfg)
-        with pytest.raises(RuntimeError):
-            pca.weight
-
         x = torch.rand(D_OUT, D_IN)
         pca.weight = x
         assert torch.equal(pca.weight, x)
@@ -35,22 +30,9 @@ class TestPCATransform:
     def test_mean(self):
         cfg = PCATransform.Config(D_IN, D_OUT)
         pca = PCATransform(cfg)
-        with pytest.raises(RuntimeError):
-            pca.mean
-
         x = torch.rand(D_IN)
         pca.mean = x
         assert torch.equal(pca.mean, x)
-
-    def test_is_trained(self):
-        cfg = PCATransform.Config(D_IN, D_OUT)
-        pca = PCATransform(cfg)
-        assert not pca.is_trained
-
-        torch.manual_seed(0)
-        x = torch.rand(N, D_IN)
-        pca.train(x)
-        assert pca.is_trained
 
     @pytest.mark.parametrize(["d_in", "d_out"], [(8, 8), (16, 16), (16, 8)])
     def test_train(self, d_in: int, d_out: int):

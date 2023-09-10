@@ -82,13 +82,8 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
             x (torch.Tensor): The input vectors of shape `(N, D)`.
 
         Returns:
-            Storage: The trained storage object.
+            Storage: The storage object.
         """
-
-    @property
-    @abc.abstractmethod
-    def is_trained(self) -> bool:
-        """Returns whether the storage is trained or not."""
 
     def add(self, x: torch.Tensor) -> None:
         """Adds the given vectors to the storage.

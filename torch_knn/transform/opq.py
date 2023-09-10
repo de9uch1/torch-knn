@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 import torch
 import torch.linalg as LA
@@ -12,7 +11,7 @@ from torch_knn.transform.base import Transform
 class OPQTransform(Transform):
     def __init__(self, cfg: "OPQTransform.Config") -> None:
         super().__init__(cfg)
-        self.register_buffer("_weight", None)
+        self.register_buffer("_weight", torch.Tensor(cfg.d_in, cfg.d_in))
 
     @dataclass
     class Config(Transform.Config):
@@ -41,20 +40,13 @@ class OPQTransform(Transform):
 
     @property
     def weight(self) -> Tensor:
-        """Weight matrix of shape `(d_out, d_in)`."""
-        if self._weight is None:
-            raise RuntimeError("Transform matrix has not been trained.")
+        """Weight matrix of shape `(d_in, d_out)`."""
         return self._weight
 
     @weight.setter
     def weight(self, x: Tensor) -> None:
-        """Sets the weight matrix of shape `(d_out, d_in)`."""
+        """Sets the weight matrix of shape `(d_in, d_out)`."""
         self._weight = x
-
-    @property
-    def is_trained(self) -> bool:
-        """Returns whether this class is trained or not."""
-        return self._weight is not None
 
     def train(self, x) -> "OPQTransform":
         """Trains vector transformation for this class.
@@ -63,7 +55,7 @@ class OPQTransform(Transform):
             x (Tensor): Training vectors of shape `(n, d_in)`.
 
         Returns:
-            Transform: Trained this class.
+            Transform: This class.
         """
         cfg = self.cfg
         initial_weight = torch.rand(cfg.d_in, cfg.d_in)

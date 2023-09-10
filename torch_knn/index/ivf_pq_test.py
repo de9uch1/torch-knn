@@ -44,13 +44,6 @@ class TestIVFPQIndex:
         index.train(x)
         assert utils.is_equal_shape(index.centroids, [NLISTS, D])
 
-    def test_is_trained(self):
-        index = IVFPQIndex(IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS))
-        x = torch.rand(N, D)
-        assert not index.is_trained
-        index.train(x)
-        assert index.is_trained
-
     @pytest.mark.parametrize("residual", [True, False])
     def test_compute_residual(self, residual: bool):
         index = IVFPQIndex(
@@ -84,7 +77,6 @@ class TestIVFPQIndex:
         )
         x = torch.rand(N, D)
         index.train(x)
-        assert index.ivf.is_trained and index.is_trained
         assert index.ivf.centroids is not None and utils.is_equal_shape(
             index.ivf.centroids, [NLISTS, D]
         )

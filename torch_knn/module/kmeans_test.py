@@ -67,14 +67,6 @@ class TestKmeans:
             expected[c] = x[assigns == c].mean(dim=0)
         assert torch.allclose(new_centroids, expected)
 
-    def test_is_trained(self):
-        torch.manual_seed(0)
-        kmeans = Kmeans(C, D)
-        x = torch.rand(N, D)
-        assert not kmeans.is_trained
-        kmeans.train(x)
-        assert kmeans.is_trained
-
     @pytest.mark.parametrize("init", list(Kmeans.Init))
     def test_train(self, init):
         torch.manual_seed(0)

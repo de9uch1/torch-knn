@@ -88,14 +88,6 @@ class TestPQStorage:
         assert utils.is_equal_shape(x, recons)
         assert torch.less((x - recons).norm() ** 2 / x.norm() ** 2, 0.1)
 
-    def test_is_trained(self):
-        cfg = PQStorage.Config(D, M=M, ksub=ksub)
-        x = torch.rand(N, D)
-        storage = PQStorage(cfg)
-        assert not storage.is_trained
-        storage = storage.train(x)
-        assert storage.is_trained
-
     @pytest.mark.parametrize(
         "x,exception",
         [

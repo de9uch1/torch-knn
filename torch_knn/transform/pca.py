@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 import torch
 import torch.linalg as LA
@@ -11,8 +10,8 @@ from torch_knn.transform.base import Transform
 class PCATransform(Transform):
     def __init__(self, cfg: "PCATransform.Config") -> None:
         super().__init__(cfg)
-        self.register_buffer("_weight", None)
-        self.register_buffer("_mean", None)
+        self.register_buffer("_weight", torch.Tensor(cfg.d_in, cfg.d_out))
+        self.register_buffer("_mean", torch.Tensor(cfg.d_in))
 
     @dataclass
     class Config(Transform.Config):
@@ -31,32 +30,23 @@ class PCATransform(Transform):
 
     @property
     def weight(self) -> Tensor:
-        """Weight matrix of shape `(d_out, d_in)`."""
-        if self._weight is None:
-            raise RuntimeError("Transform matrix has not been trained.")
+        """Weight matrix of shape `(d_in, d_out)`."""
         return self._weight
 
     @weight.setter
     def weight(self, x: Tensor) -> None:
-        """Sets the weight matrix of shape `(d_out, d_in)`."""
+        """Sets the weight matrix of shape `(d_in, d_out)`."""
         self._weight = x
 
     @property
     def mean(self) -> Tensor:
         """Mean weights of shape `(d_in,)`."""
-        if self._mean is None:
-            raise RuntimeError("Transform matrix has not been trained.")
         return self._mean
 
     @mean.setter
     def mean(self, x: Tensor) -> None:
         """Sets the mean weights of shape `(d_in,)`."""
         self._mean = x
-
-    @property
-    def is_trained(self) -> bool:
-        """Returns whether this class is trained or not."""
-        return self._weight is not None and self._mean is not None
 
     def train(self, x) -> "PCATransform":
         """Trains vector transformation for this class.
@@ -65,7 +55,7 @@ class PCATransform(Transform):
             x (Tensor): Training vectors of shape `(n, d_in)`.
 
         Returns:
-            Transform: Trained this class.
+            Transform: This class.
         """
         # Centring
         mean = x.mean(dim=0)
@@ -92,7 +82,6 @@ class PCATransform(Transform):
         Returns:
             Tensor: Transformed vectors of shape `(n, d_out)`.
         """
-        # return (x - self.mean[None, :]) @ self.weight
         return (x - self.mean[None, :]) @ self.weight
 
     def decode(self, x) -> Tensor:

@@ -15,11 +15,6 @@ class AddOneTransform(Transform):
 
     cfg: Transform.Config
 
-    @property
-    def is_trained(self) -> bool:
-        """Returns whether this class is trained or not."""
-        return True
-
     def train(self, x) -> "AddOneTransform":
         """Trains vector transformation for this class.
 
@@ -27,7 +22,7 @@ class AddOneTransform(Transform):
             x (Tensor): Training vectors of shape `(n, d_in)`.
 
         Returns:
-            AddOneTransform: Trained this class.
+            AddOneTransform: This class.
         """
         return self
 
@@ -57,12 +52,6 @@ class AddOneTransform(Transform):
 class LearnedTransform(AddOneTransform):
     def __init__(self, cfg: "Transform.Config") -> None:
         super().__init__(cfg)
-        self._is_trained = False
-
-    @property
-    def is_trained(self) -> bool:
-        """Returns whether this class is trained or not."""
-        return self._is_trained
 
     def train(self, x) -> "LearnedTransform":
         """Trains vector transformation for this class.
@@ -71,9 +60,8 @@ class LearnedTransform(AddOneTransform):
             x (Tensor): Training vectors of shape `(n, d_in)`.
 
         Returns:
-            AddOneTransform: Trained this class.
+            AddOneTransform: This class.
         """
-        self._is_trained = True
         return self
 
 
@@ -158,23 +146,6 @@ class TestPipeline:
         pipeline = Pipeline(index, [transform])
         torch.testing.assert_close(pipeline.decode(pipeline.encode(x)), x)
 
-    def test_is_trained(self):
-        x = torch.rand(N, D)
-        index = LinearPQIndex(LinearPQIndex.Config(D, M=D // 2, ksub=4))
-        pipeline = Pipeline(index)
-        assert not pipeline.is_trained
-        index.train(x)
-        assert pipeline.is_trained
-
-        index = LinearPQIndex(LinearPQIndex.Config(D, M=D // 2, ksub=4))
-        transform = LearnedTransform(LearnedTransform.Config(D, D))
-        pipeline = Pipeline(index, [transform])
-        assert not pipeline.is_trained
-        index.train(x)
-        assert not pipeline.is_trained
-        transform.train(x)
-        assert pipeline.is_trained
-
     def test_train(self):
         x = torch.rand(N, D)
         index = LinearPQIndex(LinearPQIndex.Config(D, M=D // 2, ksub=4))
@@ -196,9 +167,7 @@ class TestPipeline:
         index = LinearPQIndex(LinearPQIndex.Config(D, M=D // 2, ksub=4))
         transform = LearnedTransform(LearnedTransform.Config(D, D))
         pipeline = Pipeline(index, [transform])
-        assert not pipeline.is_trained
         pipeline.train(x)
-        assert pipeline.is_trained
 
     def test_add(self):
         x = torch.rand(N, D)

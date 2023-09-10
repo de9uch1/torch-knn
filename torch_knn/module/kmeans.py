@@ -35,7 +35,6 @@ class Kmeans(nn.Module):
         self.metric = metric
         self.init = init
         self.register_buffer("_centroids", self.init_centroids(init))
-        self.register_buffer("_trained", torch.BoolTensor([False]))
 
     @property
     def centroids(self) -> Tensor:
@@ -103,11 +102,6 @@ class Kmeans(nn.Module):
                 new_centroids[k] = x[assigns == k].mean(dim=0)
         return new_centroids
 
-    @property
-    def is_trained(self) -> bool:
-        """Returns whether the centroids are trained or not."""
-        return self._trained
-
     def train(self, x: Tensor, niter: int = 50) -> Tensor:
         """Trains k-means.
 
@@ -129,7 +123,6 @@ class Kmeans(nn.Module):
                 break
             assigns = new_assigns
             self.centroids = self.update(x, assigns)
-        self._trained[:] = True
         return self.centroids
 
 
@@ -259,5 +252,4 @@ class ParallelKmeans(Kmeans):
                 break
             assigns = new_assigns
             self.centroids = self.update(x, assigns)
-        self._trained[:] = True
         return self.centroids

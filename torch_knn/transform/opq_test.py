@@ -17,7 +17,6 @@ class TestOPQTransform:
         opq = OPQTransform(cfg)
         assert opq.cfg.d_in == D_IN
         assert opq.cfg.d_out == D_OUT
-        assert opq._weight is None
 
     class TestConfig:
         with pytest.raises(ValueError):
@@ -26,22 +25,9 @@ class TestOPQTransform:
     def test_weight(self):
         cfg = OPQTransform.Config(D_IN, D_OUT, M=M, ksub=KSUB)
         opq = OPQTransform(cfg)
-        with pytest.raises(RuntimeError):
-            opq.weight
-
         x = torch.rand(D_OUT, D_IN)
         opq.weight = x
         assert torch.equal(opq.weight, x)
-
-    def test_is_trained(self):
-        cfg = OPQTransform.Config(D_IN, D_OUT, M=M, ksub=KSUB, train_niter=10)
-        opq = OPQTransform(cfg)
-        assert not opq.is_trained
-
-        torch.manual_seed(0)
-        x = torch.rand(N, D_IN)
-        opq.train(x)
-        assert opq.is_trained
 
     @pytest.mark.parametrize(["d_in", "d_out"], [(8, 8), (16, 16), (16, 8)])
     def test_train(self, d_in: int, d_out: int):

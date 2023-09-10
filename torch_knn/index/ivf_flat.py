@@ -40,11 +40,6 @@ class IVFFlatIndex(FlatStorage, Index):
         """Returns centroid tensor of shape `(nlists, D)`"""
         return self.ivf.centroids
 
-    @property
-    def is_trained(self) -> bool:
-        """Returns whether the index is trained or not."""
-        return super().is_trained and self.ivf.is_trained
-
     def train(self, x: torch.Tensor) -> "IVFFlatIndex":
         """Trains the index with the given vectors.
 
@@ -52,7 +47,7 @@ class IVFFlatIndex(FlatStorage, Index):
             x (torch.Tensor): The input vectors of shape `(N, D)`.
 
         Returns:
-            IVFFlatIndex: The trained index object.
+            IVFFlatIndex: The index object.
         """
         self.ivf.train(x, niter=self.cfg.train_ivf_niter)
         return self
