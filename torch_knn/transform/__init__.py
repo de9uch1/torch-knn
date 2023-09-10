@@ -1,2 +1,5 @@
-from torch_knn.transform.opq import OPQTransform
-from torch_knn.transform.pca import PCATransform
+from .base import Transform
+from .opq import OPQTransform
+from .pca import PCATransform
+
+__all__ = ["Transform", "OPQTransform", "PCATransform"]

@@ -1,4 +1,7 @@
-from torch_knn.index.ivf_flat import IVFFlatIndex
-from torch_knn.index.ivf_pq import IVFPQIndex
-from torch_knn.index.linear_flat import LinearFlatIndex
-from torch_knn.index.linear_pq import LinearPQIndex
+from .base import Index
+from .ivf_flat import IVFFlatIndex
+from .ivf_pq import IVFPQIndex
+from .linear_flat import LinearFlatIndex
+from .linear_pq import LinearPQIndex
+
+__all__ = ["Index", "IVFFlatIndex", "IVFPQIndex", "LinearFlatIndex", "LinearPQIndex"]
