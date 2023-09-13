@@ -26,3 +26,15 @@ class TestInvertedFile:
         assigns = ivf.add(xb)
         assert torch.equal(assigns, torch.arange(NLISTS))
         assert all([len(plist) == 1 for plist in ivf.invlists])
+
+    def test_load_state_dict(self):
+        storage = FlatStorage(FlatStorage.Config(D))
+        ivf = InvertedFile(storage, NLISTS)
+        x = torch.rand(N, D)
+        xb = x[:NLISTS]
+        ivf.centroids = xb
+        _ = ivf.add(x)
+        state_dict = ivf.state_dict()
+        new_ivf = InvertedFile(storage, NLISTS)
+        new_ivf.load_state_dict(state_dict)
+        torch.testing.assert_close(new_ivf.invlists, ivf.invlists)

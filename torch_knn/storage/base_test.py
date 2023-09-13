@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 
 from torch_knn import utils
 from torch_knn.storage.base import Storage
@@ -16,6 +17,12 @@ class StorageMock(Storage):
 
     def fit(self, x):
         return self
+
+
+class ModuleMock(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.storage = StorageMock(StorageMock.Config(D))
 
 
 class TestStorage:
@@ -55,3 +62,22 @@ class TestStorage:
         storage = StorageMock(cfg)
         storage.add(x)
         torch.testing.assert_close(storage.data, x)
+
+    def test_load_state_dict(self):
+        x = torch.rand(N, D)
+        cfg = StorageMock.Config(D)
+        storage = StorageMock(cfg)
+        storage.add(x)
+        state_dict = storage.state_dict()
+        new_storage = StorageMock(cfg)
+        new_storage.load_state_dict(state_dict)
+        torch.testing.assert_close(new_storage.data, storage.data)
+
+    def test_load_state_dict_as_children(self):
+        x = torch.rand(N, D)
+        m = ModuleMock()
+        m.storage.add(x)
+        state_dict = m.state_dict()
+        new_m = ModuleMock()
+        new_m.load_state_dict(state_dict)
+        torch.testing.assert_close(new_m.storage.data, m.storage.data)

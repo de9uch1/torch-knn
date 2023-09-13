@@ -1,6 +1,6 @@
 import abc
 from dataclasses import asdict, dataclass
-from typing import Any, Mapping
+from typing import Any, Dict, Mapping
 
 import torch
 import torch.nn as nn
@@ -20,6 +20,7 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
         self.cfg = cfg
         self.metric = cfg.metric
         self.register_buffer("_data", torch.Tensor())
+        self._register_load_state_dict_pre_hook(self._load_state_dict_hook)
 
     @dataclass
     class Config:
@@ -101,9 +102,16 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
         """Gets extra state."""
         self.cfg = self.Config(**extra_state["cfg"])
 
-    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
-        self._data = state_dict["_data"]
-        return super().load_state_dict(state_dict, strict)
+    def _load_state_dict_hook(
+        self,
+        state_dict: Mapping[str, Any],
+        prefix: str,
+        local_metadata: Dict[str, Any],
+        *args,
+        **kwargs
+    ):
+        local_metadata["assign_to_params_buffers"] = True
+        self._data = state_dict[prefix + "_data"]
 
     @classmethod
     def load(cls, state_dict: Mapping[str, Any], strict: bool = True):

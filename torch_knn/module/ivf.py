@@ -30,8 +30,9 @@ class InvertedFile(Kmeans):
         self._register_load_state_dict_pre_hook(self._load_state_dict_hook)
 
     def _load_state_dict_hook(
-        self, state_dict: Dict[str, Any], prefix: str, *args, **kwargs
+        self, state_dict: Dict[str, Any], prefix: str, local_metadata: Dict[str, Any],*args, **kwargs
     ):
+        local_metadata["assign_to_params_buffers"] = True
         for i in range(self.nlists):
             self.set_invlists(i, state_dict[f"{prefix}_cluster_{i}"])
 
