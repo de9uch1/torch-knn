@@ -18,7 +18,7 @@ class Pipeline(nn.Module):
     def __init__(self, index: Index, pre_transforms: Optional[List[Transform]] = None):
         super().__init__()
         self.index = index
-        self.pre_transforms = pre_transforms if pre_transforms is not None else []
+        self.pre_transforms = nn.ModuleList(pre_transforms if pre_transforms is not None else [])
 
     @property
     def N(self) -> int:

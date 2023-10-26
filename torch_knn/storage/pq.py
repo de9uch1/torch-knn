@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 import torch
 
@@ -118,7 +119,9 @@ class PQStorage(Storage):
         # x: N x M x dsub -> N x D
         return x.view(N, self.D)
 
-    def fit(self, x: torch.Tensor) -> "PQStorage":
+    def fit(
+        self, x: torch.Tensor, codebook: Optional[torch.Tensor] = None
+    ) -> "PQStorage":
         """Trains the index with the given vectors.
 
         Args:
@@ -129,7 +132,9 @@ class PQStorage(Storage):
         """
         kmeans = ParallelKmeans(self.ksub, self.dsub, self.M)
         self._codebook = kmeans.fit(
-            x.view(x.size(0), self.M, self.dsub), niter=self.cfg.train_niter
+            x.view(x.size(0), self.M, self.dsub),
+            niter=self.cfg.train_niter,
+            initial_centroids=codebook,
         )
         return self
 

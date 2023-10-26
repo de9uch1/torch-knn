@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -102,7 +103,9 @@ class Kmeans(nn.Module):
                 new_centroids[k] = x[assigns == k].mean(dim=0)
         return new_centroids
 
-    def fit(self, x: Tensor, niter: int = 50) -> Tensor:
+    def fit(
+        self, x: Tensor, niter: int = 50, initial_centroids: Optional[Tensor] = None
+    ) -> Tensor:
         """Trains k-means.
 
         Args:
@@ -112,7 +115,9 @@ class Kmeans(nn.Module):
         Returns:
             Tensor: Centroids tensor of shape `(ncentroids, dim)`.
         """
-        if self.init == self.Init.RANDOM_PICK:
+        if initial_centroids is not None:
+            self.centroids = initial_centroids.to(x)
+        elif self.init == self.Init.RANDOM_PICK:
             self.centroids = x[torch.randperm(x.size(0))[: self.ncentroids]]
         else:
             self.centroids = self.centroids.to(x)
@@ -226,7 +231,9 @@ class ParallelKmeans(Kmeans):
             )
         return new_centroids
 
-    def fit(self, x: Tensor, niter: int = 50) -> Tensor:
+    def fit(
+        self, x: Tensor, niter: int = 50, initial_centroids: Optional[Tensor] = None
+    ) -> Tensor:
         """Trains k-means.
 
         Args:
@@ -236,7 +243,9 @@ class ParallelKmeans(Kmeans):
         Returns:
             Tensor: Centroids tensor of shape `(nspaces, ncentroids, dim)`.
         """
-        if self.init == self.Init.RANDOM_PICK:
+        if initial_centroids is not None:
+            self.centroids = initial_centroids.to(x)
+        elif self.init == self.Init.RANDOM_PICK:
             self.centroids = (
                 x[torch.randperm(x.size(0))[: self.ncentroids]]
                 .transpose(0, 1)
