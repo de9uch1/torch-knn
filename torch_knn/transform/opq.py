@@ -12,6 +12,15 @@ class OPQTransform(Transform):
     def __init__(self, cfg: "OPQTransform.Config") -> None:
         super().__init__(cfg)
         self.register_buffer("_weight", torch.eye(cfg.d_in))
+        self.pq = PQStorage(
+            PQStorage.Config(
+                cfg.d_out,
+                M=cfg.M,
+                ksub=cfg.ksub,
+                code_dtype=cfg.code_dtype,
+                train_niter=cfg.train_pq_niter,
+            )
+        )
 
     @dataclass
     class Config(Transform.Config):
@@ -61,25 +70,15 @@ class OPQTransform(Transform):
         Q, _ = LA.qr(self.weight.float())
         self.weight = Q[: cfg.d_out].to(self.weight)
 
-        pq = PQStorage(
-            PQStorage.Config(
-                cfg.d_out,
-                M=cfg.M,
-                ksub=cfg.ksub,
-                code_dtype=cfg.code_dtype,
-                train_niter=cfg.train_pq_niter,
-            ),
-        )
-
         for i in range(cfg.train_niter):
             x_proj = self.encode(x)
             # TODO(deguchi): Set manual seed
             torch.manual_seed(0)
             if i == 0:
-                pq.fit(x_proj)
+                self.pq.fit(x_proj)
             else:
-                pq.fit(x_proj, pq.codebook)
-            recons = pq.decode(pq.encode(x_proj))
+                self.pq.fit(x_proj, self.pq.codebook)
+            recons = self.pq.decode(self.pq.encode(x_proj))
             U, s, Vt = LA.svd((recons.T @ x).float(), full_matrices=False)
             self.weight = (U @ Vt).to(self.weight)
 
