@@ -4,13 +4,13 @@ import torch.nn as nn
 
 def is_equal_shape(
     a: torch.Tensor | torch.Size,
-    b: torch.Tensor | torch.Size | list[int] | tuple[int],
+    b: torch.Tensor | torch.Size | list[int] | tuple[int, ...],
 ) -> bool:
     """Returns whether a and b have the same shape.
 
     Args:
         a (torch.Tensor | torch.Size): An input tensor.
-        b (torch.Tensor | torch.Size | list[int] | tuple[int]):
+        b (torch.Tensor | torch.Size | list[int] | tuple[int, ...]):
           An input tensor compared the shape with a.
 
     Returns:

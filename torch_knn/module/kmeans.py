@@ -20,7 +20,6 @@ class Kmeans(nn.Module):
     """
 
     class Init(Enum):
-        RANDOM = "random"
         RANDOM_PICK = "random_pick"
 
     def __init__(
@@ -35,7 +34,16 @@ class Kmeans(nn.Module):
         self.dim = dim
         self.metric = metric
         self.init = init
-        self.register_buffer("_centroids", self.init_centroids(init))
+        self.register_buffer("_centroids", torch.zeros(self.centroids_shape))
+
+    @property
+    def centroids_shape(self) -> tuple[int, ...]:
+        """Returns the shape of centroids.
+
+        Returns:
+            tuple[int, ...]: Shape of centroids.
+        """
+        return (self.ncentroids, self.dim)
 
     @property
     def centroids(self) -> Tensor:
@@ -49,32 +57,11 @@ class Kmeans(nn.Module):
         Args:
             centroids (Tensor): Centroids tensor of shape `(ncentroids, dim)`.
         """
-        if centroids.dim() != 2 or not utils.is_equal_shape(
-            centroids, [self.ncentroids, self.dim]
-        ):
+        if not utils.is_equal_shape(centroids, self.centroids_shape):
             raise ValueError(
                 "Centroids tensor must be the shape of `(ncentroids, dim)`."
             )
         self._centroids = centroids
-
-    def init_centroids(self, init: Init) -> Tensor:
-        """Initializes cluster centorids.
-
-        Args:
-            init (Init): Initialization method.
-
-        Returns:
-            Tensor: A centroids tensor.
-
-        Raises:
-            NotImplementedError: When the given method is not implemented.
-        """
-        if init == self.Init.RANDOM:
-            return torch.rand(self.ncentroids, self.dim)
-        elif init == self.Init.RANDOM_PICK:
-            return torch.zeros(self.ncentroids, self.dim)
-        else:
-            raise NotImplementedError
 
     def assign(self, x: Tensor) -> Tensor:
         """Assigns the nearest neighbor centroid ID.
@@ -157,6 +144,15 @@ class ParallelKmeans(Kmeans):
         super().__init__(ncentroids, dim, metric=metric, init=init)
 
     @property
+    def centroids_shape(self) -> tuple[int, ...]:
+        """Returns the shape of centroids.
+
+        Returns:
+            tuple[int, ...]: Shape of centroids.
+        """
+        return (self.nspaces, self.ncentroids, self.dim)
+
+    @property
     def centroids(self) -> Tensor:
         """Returns centroids tensor of shape `(nspaces, ncentroids, dim)`."""
         return self._centroids
@@ -168,32 +164,11 @@ class ParallelKmeans(Kmeans):
         Args:
             centroids (Tensor): Centroids tensor of shape `(nspaces, ncentroids, dim)`.
         """
-        if centroids.dim() != 3 or not utils.is_equal_shape(
-            centroids, [self.nspaces, self.ncentroids, self.dim]
-        ):
+        if not utils.is_equal_shape(centroids, self.centroids_shape):
             raise ValueError(
                 "Centroids tensor must be the shape of `(nspaces, ncentroids, dim)`."
             )
         self._centroids = centroids
-
-    def init_centroids(self, init: Kmeans.Init) -> Tensor:
-        """Initializes cluster centorids.
-
-        Args:
-            init (Init): Initialization method.
-
-        Returns:
-            Tensor: A centroids tensor.
-
-        Raises:
-            NotImplementedError: When the given method is not implemented.
-        """
-        if init == self.Init.RANDOM:
-            return torch.rand(self.nspaces, self.ncentroids, self.dim)
-        elif init == self.Init.RANDOM_PICK:
-            return torch.zeros(self.nspaces, self.ncentroids, self.dim)
-        else:
-            raise NotImplementedError
 
     def assign(self, x: Tensor) -> Tensor:
         """Assigns the nearest neighbor centroid ID.
