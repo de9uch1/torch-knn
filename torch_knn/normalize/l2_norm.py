@@ -1,7 +1,7 @@
 import torch.nn.functional as F
 from torch import Tensor
 
-from torch_knn.normalize.base import Normalize
+from .base import Normalize
 
 
 class L2NormNormalize(Normalize):

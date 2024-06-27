@@ -3,9 +3,10 @@ from dataclasses import dataclass
 import torch
 
 from torch_knn import utils
-from torch_knn.index.base import Index
 from torch_knn.module.ivf import InvertedFile
 from torch_knn.storage.flat import FlatStorage
+
+from .base import Index
 
 
 class IVFFlatIndex(FlatStorage, Index):

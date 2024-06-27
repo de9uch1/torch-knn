@@ -1,7 +1,8 @@
 import torch
 
-from torch_knn.index.base import Index
 from torch_knn.storage.flat import FlatStorage
+
+from .base import Index
 
 
 class LinearFlatIndex(FlatStorage, Index):

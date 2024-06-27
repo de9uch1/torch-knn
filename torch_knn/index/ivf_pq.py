@@ -4,9 +4,10 @@ from typing import Optional
 import torch
 
 from torch_knn import metrics, utils
-from torch_knn.index.linear_pq import LinearPQIndex
 from torch_knn.module.ivf import InvertedFile
 from torch_knn.storage.pq import PQStorage
+
+from .linear_pq import LinearPQIndex
 
 
 class IVFPQIndex(LinearPQIndex):

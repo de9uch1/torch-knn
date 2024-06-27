@@ -6,7 +6,8 @@ import torch
 from torch_knn import utils
 from torch_knn.metrics import L2Metric
 from torch_knn.module.kmeans import ParallelKmeans
-from torch_knn.storage.base import Storage
+
+from .base import Storage
 
 
 class PQStorage(Storage):

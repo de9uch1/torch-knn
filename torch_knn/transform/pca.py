@@ -4,7 +4,7 @@ import torch
 import torch.linalg as LA
 from torch import Tensor
 
-from torch_knn.transform.base import Transform
+from .base import Transform
 
 
 class PCATransform(Transform):

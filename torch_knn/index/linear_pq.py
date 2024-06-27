@@ -1,7 +1,8 @@
 import torch
 
-from torch_knn.index.base import Index
 from torch_knn.storage.pq import PQStorage
+
+from .base import Index
 
 
 class LinearPQIndex(PQStorage, Index):

@@ -1,6 +1,6 @@
 import torch
 
-from torch_knn.storage.base import Storage
+from .base import Storage
 
 
 class FlatStorage(Storage):
