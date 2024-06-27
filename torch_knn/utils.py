@@ -1,18 +1,16 @@
-from typing import List, Tuple, Union
-
 import torch
 import torch.nn as nn
 
 
 def is_equal_shape(
-    a: Union[torch.Tensor, torch.Size],
-    b: Union[torch.Tensor, torch.Size, List[int], Tuple[int]],
+    a: torch.Tensor | torch.Size,
+    b: torch.Tensor | torch.Size | list[int] | tuple[int],
 ) -> bool:
     """Returns whether a and b have the same shape.
 
     Args:
-        a (Union[torch.Tensor, torch.Size]): An input tensor.
-        b (Union[torch.Tensor, torch.Size, List[int], Tuple[int]):
+        a (torch.Tensor | torch.Size): An input tensor.
+        b (torch.Tensor | torch.Size | list[int] | tuple[int]):
           An input tensor compared the shape with a.
 
     Returns:
@@ -39,11 +37,11 @@ def is_equal_shape(
     return a_shape == b_shape
 
 
-def pad(tensors: List[torch.Tensor], padding_idx: int) -> torch.Tensor:
+def pad(tensors: list[torch.Tensor], padding_idx: int) -> torch.Tensor:
     """Pads multiple sequences into a single tensor.
 
     Args:
-        tensors (List[Tensor]): A list of 1-D tensors.
+        tensors (list[Tensor]): A list of 1-D tensors.
         padding_idx (int): Padding index.
 
     Returns:

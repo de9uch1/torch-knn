@@ -1,6 +1,6 @@
 import abc
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Mapping
+from typing import Any, Mapping
 
 import torch
 import torch.nn as nn
@@ -106,7 +106,7 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
         self,
         state_dict: Mapping[str, Any],
         prefix: str,
-        local_metadata: Dict[str, Any],
+        local_metadata: dict[str, Any],
         *args,
         **kwargs,
     ):

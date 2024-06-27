@@ -1,4 +1,4 @@
-from typing import Generator, List, Optional, Tuple, Union
+from typing import Generator, Optional
 
 import torch.nn as nn
 from torch import Tensor
@@ -12,13 +12,15 @@ class Pipeline(nn.Module):
 
     Args:
         index (Index): An index.
-        pre_transforms (List[Transform], optional): Pre-transformations.
+        pre_transforms (list[Transform], optional): Pre-transformations.
     """
 
-    def __init__(self, index: Index, pre_transforms: Optional[List[Transform]] = None):
+    def __init__(self, index: Index, pre_transforms: Optional[list[Transform]] = None):
         super().__init__()
         self.index = index
-        self.pre_transforms = nn.ModuleList(pre_transforms if pre_transforms is not None else [])
+        self.pre_transforms = nn.ModuleList(
+            pre_transforms if pre_transforms is not None else []
+        )
 
     @property
     def N(self) -> int:
@@ -32,11 +34,11 @@ class Pipeline(nn.Module):
             return self.pre_transforms[0].d_in
         return self.index.D
 
-    def chain(self) -> Generator[Union[Transform, Index], None, None]:
+    def chain(self) -> Generator[Transform | Index, None, None]:
         """Yields pipeline modules.
 
         Yields:
-            Union[Transform, Index]: The transformations or the index.
+            Transform | Index: The transformations or the index.
         """
         yield from self.pre_transforms
         yield self.index
@@ -108,7 +110,7 @@ class Pipeline(nn.Module):
         x = self.transform(x)
         self.index.add(x)
 
-    def search(self, query: Tensor, k: int = 1, **kwargs) -> Tuple[Tensor, Tensor]:
+    def search(self, query: Tensor, k: int = 1, **kwargs) -> tuple[Tensor, Tensor]:
         """Searches the k-nearest-neighbor vectors.
 
         Args:
@@ -117,7 +119,7 @@ class Pipeline(nn.Module):
             **kwargs (Dict[str, Any]): Keyword arguments for the search method.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]:
+            tuple[torch.Tensor, torch.Tensor]:
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """

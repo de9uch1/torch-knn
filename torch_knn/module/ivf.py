@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import torch
 from torch import Tensor
@@ -16,7 +16,7 @@ class InvertedFile(Kmeans):
 
     Attributes:
         centroids (torch.Tensor): Centroids tensor of shape `(nlists, D)`.
-        invlists (List[Tensor]): Inverted file that stores each cluster member.
+        invlists (list[Tensor]): Inverted file that stores each cluster member.
     """
 
     def __init__(self, storage: Storage, nlists: int) -> None:
@@ -30,14 +30,19 @@ class InvertedFile(Kmeans):
         self._register_load_state_dict_pre_hook(self._load_state_dict_hook)
 
     def _load_state_dict_hook(
-        self, state_dict: Dict[str, Any], prefix: str, local_metadata: Dict[str, Any],*args, **kwargs
+        self,
+        state_dict: dict[str, Any],
+        prefix: str,
+        local_metadata: dict[str, Any],
+        *args,
+        **kwargs,
     ):
         local_metadata["assign_to_params_buffers"] = True
         for i in range(self.nlists):
             self.set_invlists(i, state_dict[f"{prefix}_cluster_{i}"])
 
     @property
-    def invlists(self) -> List[Tensor]:
+    def invlists(self) -> list[Tensor]:
         return [getattr(self, f"_cluster_{idx}") for idx in range(self.nlists)]
 
     def get_invlists(self, idx: int) -> Tensor:

@@ -1,5 +1,4 @@
 import abc
-from typing import Tuple
 
 import torch
 from torch import Tensor
@@ -22,7 +21,7 @@ class Metric(abc.ABC):
         """
 
     @staticmethod
-    def topk(distances: Tensor, k: int) -> Tuple[Tensor, Tensor]:
+    def topk(distances: Tensor, k: int) -> tuple[Tensor, Tensor]:
         """Gets k-nearest-neighbors under the metric.
 
         Args:
@@ -30,7 +29,7 @@ class Metric(abc.ABC):
             k (int): Top-k width.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]:
+            tuple[torch.Tensor, torch.Tensor]:
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
@@ -107,7 +106,7 @@ class IPMetric(Metric):
         return torch.einsum("...nd,...md->...nm", a, b)
 
     @staticmethod
-    def topk(distances: Tensor, k: int) -> Tuple[Tensor, Tensor]:
+    def topk(distances: Tensor, k: int) -> tuple[Tensor, Tensor]:
         """Gets k-nearest-neighbors under the metric.
 
         Args:
@@ -115,7 +114,7 @@ class IPMetric(Metric):
             k (int): Top-k width.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]:
+            tuple[torch.Tensor, torch.Tensor]:
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """

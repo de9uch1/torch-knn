@@ -1,5 +1,4 @@
 import abc
-from typing import Tuple
 
 import torch
 
@@ -12,7 +11,7 @@ class Index(Storage, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def search(
         self, query: torch.Tensor, k: int = 1, **kwargs
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Searches the k-nearest-neighbor vectors.
 
         Args:
@@ -21,7 +20,7 @@ class Index(Storage, metaclass=abc.ABCMeta):
             **kwargs (Dict[str, Any]): Keyword arguments for the search method.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]:
+            tuple[torch.Tensor, torch.Tensor]:
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional
 
 import torch
 
@@ -122,7 +122,7 @@ class IVFPQIndex(LinearPQIndex):
         k: int,
         nprobe: int,
         centroid_indices: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Searches the k-nearest-neighbor vectors with pre-assigned coarse centroids.
 
         This method is used when `residual=False`.
@@ -135,7 +135,7 @@ class IVFPQIndex(LinearPQIndex):
               of shape `(Nq, nprobe)`.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]:
+            tuple[torch.Tensor, torch.Tensor]:
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
@@ -274,7 +274,7 @@ class IVFPQIndex(LinearPQIndex):
         nprobe: int,
         centroid_distances: torch.Tensor,
         centroid_indices: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Searches the k-nearest-neighbor vectors with pre-assigned coarse centroids.
 
         This method is used when `residual=True`.
@@ -289,7 +289,7 @@ class IVFPQIndex(LinearPQIndex):
               of shape `(Nq, nprobe)`.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]:
+            tuple[torch.Tensor, torch.Tensor]:
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
@@ -347,7 +347,7 @@ class IVFPQIndex(LinearPQIndex):
 
     def search(
         self, query: torch.Tensor, k: int = 1, nprobe: int = 1, **kwargs
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Searches the k-nearest-neighbor vectors.
 
         Args:
@@ -356,7 +356,7 @@ class IVFPQIndex(LinearPQIndex):
             nprobe (int): Number of probing clusters.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]:
+            tuple[torch.Tensor, torch.Tensor]:
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """

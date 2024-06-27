@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Tuple
 
 import torch
 
@@ -63,7 +62,7 @@ class IVFFlatIndex(FlatStorage, Index):
 
     def search(
         self, query: torch.Tensor, k: int = 1, nprobe: int = 1, **kwargs
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Searches the k-nearest-neighbor vectors.
 
         Args:
@@ -72,7 +71,7 @@ class IVFFlatIndex(FlatStorage, Index):
             nprobe (int): Number of probing clusters.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]:
+            tuple[torch.Tensor, torch.Tensor]:
               - torch.Tensor: Distances between querys and keys of shape `(Nq, k)`.
               - torch.Tensor: Indices of the k-nearest-neighbors of shape `(Nq, k)`.
         """
