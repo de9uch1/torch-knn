@@ -71,12 +71,12 @@ class TestPipeline:
 
         pipeline = Pipeline(index)
         assert pipeline.index is index
-        assert pipeline.pre_transforms == []
+        assert list(pipeline.pre_transforms) == []
 
         transform = AddOneTransform(AddOneTransform.Config(D, D))
         pipeline = Pipeline(index, [transform])
         assert pipeline.index is index
-        assert pipeline.pre_transforms == [transform]
+        assert list(pipeline.pre_transforms) == [transform]
 
     def test_N(self):
         x = torch.rand(N, D)

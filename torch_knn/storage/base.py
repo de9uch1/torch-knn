@@ -76,7 +76,7 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def fit(self, x: torch.Tensor) -> "Storage":
+    def fit(self, x: torch.Tensor, *args, **kwargs) -> "Storage":
         """Trains the index with the given vectors.
 
         Args:
@@ -108,7 +108,7 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
         prefix: str,
         local_metadata: Dict[str, Any],
         *args,
-        **kwargs
+        **kwargs,
     ):
         local_metadata["assign_to_params_buffers"] = True
         self._data = state_dict[prefix + "_data"]
