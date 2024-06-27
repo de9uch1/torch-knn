@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch import Tensor
 
 from torch_knn import utils
-from torch_knn.metrics import L2Metric, Metric
+from torch_knn.metrics import Metric, MetricL2
 
 
 class Kmeans(nn.Module):
@@ -26,7 +26,7 @@ class Kmeans(nn.Module):
         self,
         ncentroids: int,
         dim: int,
-        metric: Metric = L2Metric(),
+        metric: Metric = MetricL2(),
         init: Init = Init.RANDOM_PICK,
     ) -> None:
         super().__init__()
@@ -137,7 +137,7 @@ class ParallelKmeans(Kmeans):
         ncentroids: int,
         dim: int,
         nspaces: int,
-        metric: Metric = L2Metric(),
+        metric: Metric = MetricL2(),
         init: Kmeans.Init = Kmeans.Init.RANDOM_PICK,
     ) -> None:
         self.nspaces = nspaces

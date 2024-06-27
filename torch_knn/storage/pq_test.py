@@ -5,7 +5,8 @@ import torch
 
 from torch_knn import utils
 from torch_knn.module.kmeans import ParallelKmeans
-from torch_knn.storage.pq import PQStorage
+
+from .pq import StoragePQ
 
 D = 8
 M = 4
@@ -14,36 +15,36 @@ ksub = 16
 N = ksub * 5
 
 
-class TestPQStorage:
+class TestStoragePQ:
     class TestConfig:
         def test___post_init__(self):
             with pytest.raises(ValueError):
-                PQStorage.Config(D=8, M=3)
+                StoragePQ.Config(D=8, M=3)
 
-            cfg = PQStorage.Config(D=D, M=M)
-            assert isinstance(cfg, PQStorage.Config)
+            cfg = StoragePQ.Config(D=D, M=M)
+            assert isinstance(cfg, StoragePQ.Config)
             assert cfg.D == D
             assert cfg.M == M
 
     def test_M(self):
-        storage = PQStorage(PQStorage.Config(D, M=M, ksub=ksub))
+        storage = StoragePQ(StoragePQ.Config(D, M=M, ksub=ksub))
         assert storage.M == M
 
     def test_dsub(self):
-        storage = PQStorage(PQStorage.Config(D, M=M, ksub=ksub))
+        storage = StoragePQ(StoragePQ.Config(D, M=M, ksub=ksub))
         assert storage.dsub == D // M
 
     def test_ksub(self):
-        storage = PQStorage(PQStorage.Config(D, M=M, ksub=ksub))
+        storage = StoragePQ(StoragePQ.Config(D, M=M, ksub=ksub))
         assert storage.ksub == ksub
 
     def test_codebook(self):
-        storage = PQStorage(PQStorage.Config(D, M=M, ksub=ksub))
+        storage = StoragePQ(StoragePQ.Config(D, M=M, ksub=ksub))
         x = torch.rand(N, D)
         storage.fit(x)
         assert utils.is_equal_shape(storage.codebook, [M, ksub, dsub])
 
-        storage = PQStorage(PQStorage.Config(D, M=M, ksub=ksub))
+        storage = StoragePQ(StoragePQ.Config(D, M=M, ksub=ksub))
         x = torch.rand(M, N, D)
         with pytest.raises(ValueError):
             storage.codebook = x
@@ -53,9 +54,9 @@ class TestPQStorage:
         assert torch.equal(storage.codebook, x)
 
     def test_encode(self):
-        cfg = PQStorage.Config(D, M=M, ksub=ksub)
+        cfg = StoragePQ.Config(D, M=M, ksub=ksub)
         x = torch.rand(N, D)
-        storage = PQStorage(cfg)
+        storage = StoragePQ(cfg)
         storage.fit(x)
         codes = storage.encode(x)
         assert utils.is_equal_shape(codes, [N, M])
@@ -71,9 +72,9 @@ class TestPQStorage:
         )
 
     def test_decode(self):
-        cfg = PQStorage.Config(D, M=M, ksub=ksub)
+        cfg = StoragePQ.Config(D, M=M, ksub=ksub)
         x = torch.rand(N, D)
-        storage = PQStorage(cfg)
+        storage = StoragePQ(cfg)
         with pytest.raises(RuntimeError):
             storage.decode(x)
         storage.fit(x)
@@ -98,8 +99,8 @@ class TestPQStorage:
         ],
     )
     def test_fit(self, x, exception):
-        cfg = PQStorage.Config(D, M=M, ksub=ksub)
-        storage = PQStorage(cfg)
+        cfg = StoragePQ.Config(D, M=M, ksub=ksub)
+        storage = StoragePQ(cfg)
         torch.manual_seed(0)
         with exception:
             storage = storage.fit(x)
@@ -112,22 +113,22 @@ class TestPQStorage:
     class TestADTable:
         def test_Nq(self):
             x = torch.rand(N, M, ksub)
-            adtable = PQStorage.ADTable(x)
+            adtable = StoragePQ.ADTable(x)
             assert adtable.Nq == N
 
         def test_M(self):
             x = torch.rand(N, M, ksub)
-            adtable = PQStorage.ADTable(x)
+            adtable = StoragePQ.ADTable(x)
             assert adtable.M == M
 
         def test_ksub(self):
             x = torch.rand(N, M, ksub)
-            adtable = PQStorage.ADTable(x)
+            adtable = StoragePQ.ADTable(x)
             assert adtable.ksub == ksub
 
         def test_lookup(self):
             x = torch.rand(N, M, ksub)
-            adtable = PQStorage.ADTable(x)
+            adtable = StoragePQ.ADTable(x)
 
             wrong_shape_codes = torch.randint(ksub, size=(N,), dtype=torch.uint8)
             with pytest.raises(ValueError):
@@ -143,22 +144,22 @@ class TestPQStorage:
             assert utils.is_equal_shape(adists, [N, N])
 
     def test_compute_adtable(self):
-        cfg = PQStorage.Config(D, M=M, ksub=ksub)
+        cfg = StoragePQ.Config(D, M=M, ksub=ksub)
         x = torch.rand(N, D)
-        storage = PQStorage(cfg)
+        storage = StoragePQ(cfg)
         storage.fit(x)
         codes = storage.encode(x)
         assert utils.is_equal_shape(codes, [N, M])
         adtable = storage.compute_adtable(x)
-        assert isinstance(adtable, PQStorage.ADTable)
+        assert isinstance(adtable, StoragePQ.ADTable)
         assert utils.is_equal_shape(adtable, [N, M, ksub])
 
     def test_adc(self):
         """Tests ADC consistency."""
         torch.manual_seed(0)
         x = torch.rand(N, D)
-        cfg = PQStorage.Config(D, M=M, ksub=ksub)
-        storage = PQStorage(cfg)
+        cfg = StoragePQ.Config(D, M=M, ksub=ksub)
+        storage = StoragePQ(cfg)
         storage.fit(x)
         adtable = storage.compute_adtable(x)
         adists = adtable.lookup(storage.encode(x))

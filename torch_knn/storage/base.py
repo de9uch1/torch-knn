@@ -5,7 +5,7 @@ from typing import Any, Mapping
 import torch
 import torch.nn as nn
 
-from torch_knn.metrics import L2Metric, Metric
+from torch_knn.metrics import Metric, MetricL2
 
 
 class Storage(nn.Module, metaclass=abc.ABCMeta):
@@ -31,7 +31,7 @@ class Storage(nn.Module, metaclass=abc.ABCMeta):
         """
 
         D: int
-        metric: Metric = L2Metric()
+        metric: Metric = MetricL2()
 
     @property
     def N(self) -> int:

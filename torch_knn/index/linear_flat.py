@@ -1,15 +1,15 @@
 import torch
 
-from torch_knn.storage.flat import FlatStorage
+from torch_knn.storage.flat import StorageFlat
 
 from .base import Index
 
 
-class LinearFlatIndex(FlatStorage, Index):
+class IndexLinearFlat(StorageFlat, Index):
     """Flat linear scan index.
 
     Args:
-        cfg (LinearFlatIndex.Config): Configuration for this class.
+        cfg (IndexLinearFlat.Config): Configuration for this class.
     """
 
     def search(

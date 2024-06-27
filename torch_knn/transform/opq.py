@@ -4,7 +4,7 @@ import torch
 import torch.linalg as LA
 from torch import Tensor
 
-from torch_knn.storage.pq import PQStorage
+from torch_knn.storage.pq import StoragePQ
 
 from .base import Transform
 
@@ -13,8 +13,8 @@ class OPQTransform(Transform):
     def __init__(self, cfg: "OPQTransform.Config") -> None:
         super().__init__(cfg)
         self.register_buffer("_weight", torch.eye(cfg.d_in))
-        self.pq = PQStorage(
-            PQStorage.Config(
+        self.pq = StoragePQ(
+            StoragePQ.Config(
                 cfg.d_out,
                 M=cfg.M,
                 ksub=cfg.ksub,

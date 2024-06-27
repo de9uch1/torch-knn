@@ -1,5 +1,5 @@
 from .base import Storage
-from .flat import FlatStorage
-from .pq import PQStorage
+from .flat import StorageFlat
+from .pq import StoragePQ
 
-__all__ = ["Storage", "FlatStorage", "PQStorage"]
+__all__ = ["Storage", "StorageFlat", "StoragePQ"]

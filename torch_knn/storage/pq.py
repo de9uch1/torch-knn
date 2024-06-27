@@ -4,24 +4,24 @@ from typing import Optional
 import torch
 
 from torch_knn import utils
-from torch_knn.metrics import L2Metric
+from torch_knn.metrics import MetricL2
 from torch_knn.module.kmeans import ParallelKmeans
 
 from .base import Storage
 
 
-class PQStorage(Storage):
+class StoragePQ(Storage):
     """Product Quantized storage class.
 
     Args:
-        cfg (PQStorage.Config): Configuration for this class.
+        cfg (StoragePQ.Config): Configuration for this class.
 
     Attributes:
         - data (torch.Tensor): The PQ code storage of shape `(N, M)`.
         - codebook (torch.Tensor): The PQ codebook of shape `(M, ksub, dsub)`.
     """
 
-    def __init__(self, cfg: "PQStorage.Config"):
+    def __init__(self, cfg: "StoragePQ.Config"):
         super().__init__(cfg)
         self._data = self.data.to(cfg.code_dtype)
         self.register_buffer("_codebook", torch.rand(self.M, self.ksub, self.dsub))
@@ -47,7 +47,7 @@ class PQStorage(Storage):
             if self.D % self.M > 0:
                 raise ValueError(f"D={self.D} must be divisible by M={self.M}.")
 
-    cfg: "PQStorage.Config"
+    cfg: "StoragePQ.Config"
 
     @property
     def M(self) -> int:
@@ -84,7 +84,7 @@ class PQStorage(Storage):
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         """Encodes the given vectors.
 
-        PQStorage class encodes `x` by looking up the codebook.
+        StoragePQ class encodes `x` by looking up the codebook.
 
         Args:
             x (torch.Tensor): The input vectors of shape `(N, D)`.
@@ -97,7 +97,7 @@ class PQStorage(Storage):
         x = x.view(N, self.M, self.dsub).transpose(0, 1).contiguous()
 
         # assignments: M x N x ksub
-        assignments = L2Metric.assign(x, self.codebook)
+        assignments = MetricL2.assign(x, self.codebook)
         return assignments.to(self.cfg.code_dtype).transpose(0, 1).contiguous()
 
     def decode(self, codes: torch.Tensor) -> torch.Tensor:
@@ -122,14 +122,14 @@ class PQStorage(Storage):
 
     def fit(
         self, x: torch.Tensor, codebook: Optional[torch.Tensor] = None
-    ) -> "PQStorage":
+    ) -> "StoragePQ":
         """Trains the index with the given vectors.
 
         Args:
             x (torch.Tensor): The input vectors of shape `(N, D)`.
 
         Returns:
-            PQStorage: The storage object.
+            StoragePQ: The storage object.
         """
         kmeans = ParallelKmeans(self.ksub, self.dsub, self.M)
         self._codebook = kmeans.fit(

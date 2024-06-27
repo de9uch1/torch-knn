@@ -3,9 +3,10 @@ import torch
 from torch import Tensor
 
 from torch_knn import metrics, utils
-from torch_knn.index.ivf_pq import IVFPQIndex
-from torch_knn.index.linear_pq import LinearPQIndex
 from torch_knn.module.ivf import InvertedFile
+
+from .ivf_pq import IndexIVFPQ
+from .linear_pq import IndexLinearPQ
 
 D = 8
 NLISTS = 5
@@ -33,21 +34,21 @@ class MockMetric(metrics.Metric):
         return torch.cdist(a, b, p=2) ** 2
 
 
-class TestIVFPQIndex:
+class TestIndexIVFPQ:
     def test___init__(self):
-        index = IVFPQIndex(IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS))
+        index = IndexIVFPQ(IndexIVFPQ.Config(D, M=M, ksub=ksub, nlists=NLISTS))
         assert isinstance(index.ivf, InvertedFile)
 
     def test_centroids(self):
-        index = IVFPQIndex(IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS))
+        index = IndexIVFPQ(IndexIVFPQ.Config(D, M=M, ksub=ksub, nlists=NLISTS))
         x = torch.rand(N, D)
         index.fit(x)
         assert utils.is_equal_shape(index.centroids, [NLISTS, D])
 
     @pytest.mark.parametrize("residual", [True, False])
     def test_compute_residual(self, residual: bool):
-        index = IVFPQIndex(
-            IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS, residual=residual)
+        index = IndexIVFPQ(
+            IndexIVFPQ.Config(D, M=M, ksub=ksub, nlists=NLISTS, residual=residual)
         )
         x = torch.rand(N, D)
         index.ivf.fit(x)
@@ -61,11 +62,11 @@ class TestIVFPQIndex:
             )
 
     @pytest.mark.parametrize("residual", [True, False])
-    @pytest.mark.parametrize("metric", [metrics.L2Metric(), metrics.IPMetric()])
+    @pytest.mark.parametrize("metric", [metrics.MetricL2(), metrics.MetricIP()])
     @pytest.mark.parametrize("precompute", [True, False])
     def test_fit(self, residual: bool, metric: metrics.Metric, precompute: bool):
-        index = IVFPQIndex(
-            IVFPQIndex.Config(
+        index = IndexIVFPQ(
+            IndexIVFPQ.Config(
                 D,
                 metric=metric,
                 M=M,
@@ -80,24 +81,24 @@ class TestIVFPQIndex:
         assert index.ivf.centroids is not None and utils.is_equal_shape(
             index.ivf.centroids, [NLISTS, D]
         )
-        if residual and isinstance(metric, metrics.L2Metric) and precompute:
+        if residual and isinstance(metric, metrics.MetricL2) and precompute:
             assert index.precompute_table is not None
             assert utils.is_equal_shape(index.precompute_table, [NLISTS, M, ksub])
         else:
             assert index.precompute_table is None
 
     @pytest.mark.parametrize("residual", [True, False])
-    @pytest.mark.parametrize("metric", [metrics.L2Metric(), metrics.IPMetric()])
+    @pytest.mark.parametrize("metric", [metrics.MetricL2(), metrics.MetricIP()])
     def test_build_precompute_table(self, residual: bool, metric: metrics.Metric):
-        cfg = IVFPQIndex.Config(
+        cfg = IndexIVFPQ.Config(
             D, metric=metric, M=M, ksub=ksub, nlists=NLISTS, residual=residual
         )
-        index = IVFPQIndex(cfg)
+        index = IndexIVFPQ(cfg)
         x = torch.rand(N, D)
         index.fit(x)
         assert index.precompute_table is None
         table = index.build_precompute_table()
-        if not residual or not isinstance(metric, metrics.L2Metric):
+        if not residual or not isinstance(metric, metrics.MetricL2):
             assert index.precompute_table is None
             assert table is None
         else:
@@ -126,8 +127,8 @@ class TestIVFPQIndex:
 
     @pytest.mark.parametrize("residual", [True, False])
     def test_add(self, residual: bool):
-        index = IVFPQIndex(
-            IVFPQIndex.Config(D, M=M, ksub=ksub, nlists=NLISTS, residual=residual)
+        index = IndexIVFPQ(
+            IndexIVFPQ.Config(D, M=M, ksub=ksub, nlists=NLISTS, residual=residual)
         )
         x = torch.rand(N, D)
         index.fit(x)
@@ -144,21 +145,21 @@ class TestIVFPQIndex:
         index.add(x)
         assert index.N == 2 * N
 
-    @pytest.mark.parametrize("metric", [metrics.L2Metric(), metrics.IPMetric()])
+    @pytest.mark.parametrize("metric", [metrics.MetricL2(), metrics.MetricIP()])
     def test_search_preassigned_noresidual(self, metric: metrics.Metric):
-        ivfpq_index = IVFPQIndex(
-            IVFPQIndex.Config(
+        ivfpq_index = IndexIVFPQ(
+            IndexIVFPQ.Config(
                 D, metric=metric, M=M, ksub=ksub, nlists=NLISTS, residual=False
             )
         )
         x = torch.rand(N, D)
         ivfpq_index.ivf.fit(x)
         torch.manual_seed(0)
-        super(IVFPQIndex, ivfpq_index).fit(x)
+        super(IndexIVFPQ, ivfpq_index).fit(x)
         ivfpq_index.add(x)
 
-        linearpq_index = LinearPQIndex(
-            LinearPQIndex.Config(D=D, metric=metric, M=M, ksub=ksub)
+        linearpq_index = IndexLinearPQ(
+            IndexLinearPQ.Config(D=D, metric=metric, M=M, ksub=ksub)
         )
         torch.manual_seed(0)
         linearpq_index.fit(x)
@@ -175,14 +176,14 @@ class TestIVFPQIndex:
 
     @pytest.mark.parametrize(
         "metric",
-        [metrics.L2Metric(), metrics.IPMetric(), MockMetric()],
+        [metrics.MetricL2(), metrics.MetricIP(), MockMetric()],
     )
     @pytest.mark.parametrize("precompute", [True, False])
     def test_search_preassigned_residual(
         self, metric: metrics.Metric, precompute: bool
     ):
-        ivfpq_index = IVFPQIndex(
-            IVFPQIndex.Config(
+        ivfpq_index = IndexIVFPQ(
+            IndexIVFPQ.Config(
                 D,
                 metric=metric,
                 M=M,
@@ -224,9 +225,9 @@ class TestIVFPQIndex:
 
     @pytest.mark.parametrize("precompute", [True, False])
     def test_compute_residual_adtable_L2(self, precompute: bool):
-        metric = metrics.L2Metric()
-        index = IVFPQIndex(
-            IVFPQIndex.Config(
+        metric = metrics.MetricL2()
+        index = IndexIVFPQ(
+            IndexIVFPQ.Config(
                 D,
                 metric=metric,
                 M=M,
@@ -257,20 +258,20 @@ class TestIVFPQIndex:
         ).view(NLISTS, Nq, M, ksub)
         for i in range(NLISTS):
             codes = index.data[index.ivf.invlists[i]]
-            dists[:, index.ivf.invlists[i]] = IVFPQIndex.ADTable(adtable[i]).lookup(
+            dists[:, index.ivf.invlists[i]] = IndexIVFPQ.ADTable(adtable[i]).lookup(
                 codes
             )
 
         recons_dists = index.metric.compute_distance(xq, recons_data)
         torch.testing.assert_close(dists, recons_dists)
 
-    @pytest.mark.parametrize("metric", [metrics.IPMetric()])
+    @pytest.mark.parametrize("metric", [metrics.MetricIP()])
     @pytest.mark.parametrize("precompute", [True, False])
     def test_compute_residual_adtable_IP(
         self, metric: metrics.Metric, precompute: bool
     ):
-        index = IVFPQIndex(
-            IVFPQIndex.Config(
+        index = IndexIVFPQ(
+            IndexIVFPQ.Config(
                 D,
                 metric=metric,
                 M=M,
@@ -297,7 +298,7 @@ class TestIVFPQIndex:
         ).view(NLISTS, Nq, M, ksub)
         for i in range(NLISTS):
             codes = index.data[index.ivf.invlists[i]]
-            dists[:, index.ivf.invlists[i]] = IVFPQIndex.ADTable(adtable[i]).lookup(
+            dists[:, index.ivf.invlists[i]] = IndexIVFPQ.ADTable(adtable[i]).lookup(
                 codes
             )
 
@@ -305,7 +306,7 @@ class TestIVFPQIndex:
         torch.testing.assert_close(dists, recons_dists)
 
     @pytest.mark.parametrize(
-        "metric,eps", [(metrics.L2Metric(), 0.1), (metrics.IPMetric(), 0.25)]
+        "metric,eps", [(metrics.MetricL2(), 0.1), (metrics.MetricIP(), 0.25)]
     )
     @pytest.mark.parametrize("residual", [True, False])
     @pytest.mark.parametrize("precompute", [True, False])
@@ -321,8 +322,8 @@ class TestIVFPQIndex:
         k: int,
     ):
         torch.manual_seed(0)
-        index = IVFPQIndex(
-            IVFPQIndex.Config(
+        index = IndexIVFPQ(
+            IndexIVFPQ.Config(
                 D,
                 M=M,
                 ksub=ksub,
@@ -345,6 +346,6 @@ class TestIVFPQIndex:
         expected_dists, expected_idxs = metric.topk(distance_matrix, k=k)
         assert torch.less_equal((dists - expected_dists).square().mean().sqrt(), eps)
 
-        if isinstance(metric, metrics.L2Metric):
+        if isinstance(metric, metrics.MetricL2):
             assert torch.less_equal(dists[:, 0].mean() / D, eps)
             assert torch.equal(idxs[:, 0], torch.arange(Nq))

@@ -4,25 +4,25 @@ import torch
 
 from torch_knn import utils
 from torch_knn.module.ivf import InvertedFile
-from torch_knn.storage.flat import FlatStorage
+from torch_knn.storage.flat import StorageFlat
 
 from .base import Index
 
 
-class IVFFlatIndex(FlatStorage, Index):
+class IndexIVFFlat(StorageFlat, Index):
     """Inverted file index class.
 
     Args:
-        cfg (IVFFlatIndex.Config): Configuration for this class.
+        cfg (IndexIVFFlat.Config): Configuration for this class.
     """
 
-    def __init__(self, cfg: "IVFFlatIndex.Config"):
+    def __init__(self, cfg: "IndexIVFFlat.Config"):
         super().__init__(cfg)
         self.ivf = InvertedFile(self, cfg.nlists)
 
     @dataclass
-    class Config(FlatStorage.Config):
-        """IVFFlatIndex configuration.
+    class Config(StorageFlat.Config):
+        """IndexIVFFlat configuration.
 
         - D (int): Dimension size of input vectors.
         - metric (Metric): Metric for dinstance computation.
@@ -33,21 +33,21 @@ class IVFFlatIndex(FlatStorage, Index):
         nlists: int = 1
         train_ivf_niter: int = 30
 
-    cfg: "IVFFlatIndex.Config"
+    cfg: "IndexIVFFlat.Config"
 
     @property
     def centroids(self) -> torch.Tensor:
         """Returns centroid tensor of shape `(nlists, D)`"""
         return self.ivf.centroids
 
-    def fit(self, x: torch.Tensor) -> "IVFFlatIndex":
+    def fit(self, x: torch.Tensor) -> "IndexIVFFlat":
         """Trains the index with the given vectors.
 
         Args:
             x (torch.Tensor): The input vectors of shape `(N, D)`.
 
         Returns:
-            IVFFlatIndex: The index object.
+            IndexIVFFlat: The index object.
         """
         self.ivf.fit(x, niter=self.cfg.train_ivf_niter)
         return self

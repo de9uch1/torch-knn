@@ -1,7 +1,7 @@
 from .base import Index
-from .ivf_flat import IVFFlatIndex
-from .ivf_pq import IVFPQIndex
-from .linear_flat import LinearFlatIndex
-from .linear_pq import LinearPQIndex
+from .ivf_flat import IndexIVFFlat
+from .ivf_pq import IndexIVFPQ
+from .linear_flat import IndexLinearFlat
+from .linear_pq import IndexLinearPQ
 
-__all__ = ["Index", "IVFFlatIndex", "IVFPQIndex", "LinearFlatIndex", "LinearPQIndex"]
+__all__ = ["Index", "IndexIVFFlat", "IndexIVFPQ", "IndexLinearFlat", "IndexLinearPQ"]

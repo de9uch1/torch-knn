@@ -66,7 +66,7 @@ class Metric(abc.ABC):
         return distances.masked_fill_(padding_mask, self.farthest_value)
 
 
-class L2Metric(Metric):
+class MetricL2(Metric):
     """L2 metric for squared Euclidean distance computation."""
 
     @staticmethod
@@ -89,7 +89,7 @@ class L2Metric(Metric):
         return torch.cdist(a, b, p=2) ** 2
 
 
-class IPMetric(Metric):
+class MetricIP(Metric):
     """IP metric for inner product distance computation."""
 
     @staticmethod

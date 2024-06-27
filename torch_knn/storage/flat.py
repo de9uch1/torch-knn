@@ -3,16 +3,16 @@ import torch
 from .base import Storage
 
 
-class FlatStorage(Storage):
+class StorageFlat(Storage):
     """Flat storage class.
 
-    FlatStorage stores the `(N, D)` vectors.
+    StorageFlat stores the `(N, D)` vectors.
 
     Args:
-        cfg (FlatStorage.Config): Configuration for this class.
+        cfg (StorageFlat.Config): Configuration for this class.
     """
 
-    cfg: "FlatStorage.Config"
+    cfg: "StorageFlat.Config"
 
     @property
     def data(self) -> torch.Tensor:
@@ -22,7 +22,7 @@ class FlatStorage(Storage):
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         """Encodes the given vectors.
 
-        FlatStorage class returns the identity mapping of `x`.
+        StorageFlat class returns the identity mapping of `x`.
 
         Args:
             x (torch.Tensor): The input vectors of shape `(N, D)`.
@@ -35,7 +35,7 @@ class FlatStorage(Storage):
     def decode(self, x: torch.Tensor) -> torch.Tensor:
         """Decodes the given vectors.
 
-        FlatStorage class returns the identity mapping of `x`.
+        StorageFlat class returns the identity mapping of `x`.
 
         Args:
             x (torch.Tensor): The input vectors of shape `(N, D)`.
@@ -45,13 +45,13 @@ class FlatStorage(Storage):
         """
         return x
 
-    def fit(self, x: torch.Tensor) -> "FlatStorage":
+    def fit(self, x: torch.Tensor) -> "StorageFlat":
         """Trains the index with the given vectors.
 
         Args:
             x (torch.Tensor): The input vectors of shape `(N, D)`.
 
         Returns:
-            FlatStorage: The storage object.
+            StorageFlat: The storage object.
         """
         return self

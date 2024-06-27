@@ -5,26 +5,26 @@ import torch
 
 from torch_knn import metrics, utils
 from torch_knn.module.ivf import InvertedFile
-from torch_knn.storage.pq import PQStorage
+from torch_knn.storage.pq import StoragePQ
 
-from .linear_pq import LinearPQIndex
+from .linear_pq import IndexLinearPQ
 
 
-class IVFPQIndex(LinearPQIndex):
+class IndexIVFPQ(IndexLinearPQ):
     """Inverted file index class.
 
     Args:
-        cfg (IVFPQIndex.Config): Configuration for this class.
+        cfg (IndexIVFPQ.Config): Configuration for this class.
     """
 
-    def __init__(self, cfg: "IVFPQIndex.Config"):
+    def __init__(self, cfg: "IndexIVFPQ.Config"):
         super().__init__(cfg)
         self.ivf = InvertedFile(self, cfg.nlists)
         self.precompute_table = None
 
     @dataclass
-    class Config(PQStorage.Config):
-        """IVFPQIndex configuration.
+    class Config(StoragePQ.Config):
+        """IndexIVFPQ configuration.
 
         - D (int): Dimension size of input vectors.
         - M (int): The number of sub-vectors.
@@ -43,7 +43,7 @@ class IVFPQIndex(LinearPQIndex):
         residual: bool = True
         precompute: bool = False
 
-    cfg: "IVFPQIndex.Config"
+    cfg: "IndexIVFPQ.Config"
 
     @property
     def centroids(self) -> torch.Tensor:
@@ -68,7 +68,7 @@ class IVFPQIndex(LinearPQIndex):
 
     def fit(
         self, x: torch.Tensor, codebook: Optional[torch.Tensor] = None
-    ) -> "IVFPQIndex":
+    ) -> "IndexIVFPQ":
         """Trains the index with the given vectors.
 
         Args:
@@ -90,7 +90,7 @@ class IVFPQIndex(LinearPQIndex):
         Returns:
             torch.Tensor, optional: Precompute table of shape `(nlists, M, ksub)`.
         """
-        if not self.cfg.residual or not isinstance(self.metric, metrics.L2Metric):
+        if not self.cfg.residual or not isinstance(self.metric, metrics.MetricL2):
             return None
 
         # cr_table: nlists x M x ksub
@@ -168,7 +168,7 @@ class IVFPQIndex(LinearPQIndex):
         nprobe: int,
         transposed_centroid_distances: torch.Tensor,
         transposed_centroid_indices: torch.Tensor,
-    ) -> PQStorage.ADTable:
+    ) -> StoragePQ.ADTable:
         """Computes euclidean distance between a query and keys using residual vectors.
 
         The distance is calculated as follows:
@@ -231,7 +231,7 @@ class IVFPQIndex(LinearPQIndex):
         query: torch.Tensor,
         nprobe: int,
         transposed_centroid_distances: torch.Tensor,
-    ) -> PQStorage.ADTable:
+    ) -> StoragePQ.ADTable:
         """Computes inner product between a query and keys using residual vectors.
 
         The distance is calculated as follows:
@@ -302,14 +302,14 @@ class IVFPQIndex(LinearPQIndex):
         transposed_centroid_indices = centroid_indices.transpose(0, 1).contiguous()
 
         Nq = query.size(0)
-        if isinstance(self.metric, metrics.L2Metric):
+        if isinstance(self.metric, metrics.MetricL2):
             adtable = self.compute_residual_adtable_L2(
                 query,
                 nprobe,
                 transposed_centroid_distances,
                 transposed_centroid_indices,
             ).view(nprobe, Nq, self.M, self.ksub)
-        elif isinstance(self.metric, metrics.IPMetric):
+        elif isinstance(self.metric, metrics.MetricIP):
             adtable = self.compute_residual_adtable_IP(
                 query, nprobe, transposed_centroid_distances
             ).view(nprobe, Nq, self.M, self.ksub)

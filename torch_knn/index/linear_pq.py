@@ -1,15 +1,15 @@
 import torch
 
-from torch_knn.storage.pq import PQStorage
+from torch_knn.storage.pq import StoragePQ
 
 from .base import Index
 
 
-class LinearPQIndex(PQStorage, Index):
+class IndexLinearPQ(StoragePQ, Index):
     """PQ linear scan index.
 
     Args:
-        cfg (LinearPQIndex.Config): Configuration for this class.
+        cfg (IndexLinearPQ.Config): Configuration for this class.
     """
 
     def search(

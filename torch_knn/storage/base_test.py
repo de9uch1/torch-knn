@@ -2,7 +2,8 @@ import torch
 import torch.nn as nn
 
 from torch_knn import utils
-from torch_knn.storage.base import Storage
+
+from .base import Storage
 
 N = 3
 D = 8

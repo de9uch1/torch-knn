@@ -1,8 +1,8 @@
 import torch
 from torch import Tensor
 
-from torch_knn.index import LinearFlatIndex
-from torch_knn.index.linear_pq import LinearPQIndex
+from torch_knn.index import IndexLinearFlat
+from torch_knn.index.linear_pq import IndexLinearPQ
 from torch_knn.pipeline import Pipeline
 from torch_knn.transform.base import Transform
 
@@ -67,7 +67,7 @@ class LearnedTransform(AddOneTransform):
 
 class TestPipeline:
     def test___init__(self):
-        index = LinearFlatIndex(LinearFlatIndex.Config(D))
+        index = IndexLinearFlat(IndexLinearFlat.Config(D))
 
         pipeline = Pipeline(index)
         assert pipeline.index is index
@@ -80,7 +80,7 @@ class TestPipeline:
 
     def test_N(self):
         x = torch.rand(N, D)
-        index = LinearFlatIndex(LinearFlatIndex.Config(D))
+        index = IndexLinearFlat(IndexLinearFlat.Config(D))
         transform = AddOneTransform(AddOneTransform.Config(D, D))
         index.add(x)
 
@@ -88,7 +88,7 @@ class TestPipeline:
         assert pipeline.N == index.N
 
     def test_D(self):
-        index = LinearFlatIndex(LinearFlatIndex.Config(D))
+        index = IndexLinearFlat(IndexLinearFlat.Config(D))
 
         pipeline = Pipeline(index)
         assert pipeline.D == index.D
@@ -105,7 +105,7 @@ class TestPipeline:
         assert pipeline.D == D * 2
 
     def test_chain(self):
-        index = LinearFlatIndex(LinearFlatIndex.Config(D))
+        index = IndexLinearFlat(IndexLinearFlat.Config(D))
         pipeline = Pipeline(index)
         assert list(pipeline.chain()) == [index]
 
@@ -115,7 +115,7 @@ class TestPipeline:
 
     def test_transform(self):
         x = torch.rand(N, D)
-        index = LinearFlatIndex(LinearFlatIndex.Config(D))
+        index = IndexLinearFlat(IndexLinearFlat.Config(D))
 
         pipeline = Pipeline(index)
         torch.equal(pipeline.transform(x), x)
@@ -130,7 +130,7 @@ class TestPipeline:
     def test_encode(self):
         torch.manual_seed(0)
         x = torch.rand(N, D)
-        index = LinearFlatIndex(LinearFlatIndex.Config(D))
+        index = IndexLinearFlat(IndexLinearFlat.Config(D))
         pipeline = Pipeline(index)
         assert torch.equal(pipeline.encode(x), x)
 
@@ -141,14 +141,14 @@ class TestPipeline:
     def test_decode(self):
         torch.manual_seed(0)
         x = torch.rand(N, D)
-        index = LinearFlatIndex(LinearFlatIndex.Config(D))
+        index = IndexLinearFlat(IndexLinearFlat.Config(D))
         transform = AddOneTransform(AddOneTransform.Config(D, D))
         pipeline = Pipeline(index, [transform])
         torch.testing.assert_close(pipeline.decode(pipeline.encode(x)), x)
 
     def test_fit(self):
         x = torch.rand(N, D)
-        index = LinearPQIndex(LinearPQIndex.Config(D, M=D // 2, ksub=4))
+        index = IndexLinearPQ(IndexLinearPQ.Config(D, M=D // 2, ksub=4))
         torch.manual_seed(0)
         index.fit(x)
         expected_codebook = index.codebook
@@ -164,19 +164,19 @@ class TestPipeline:
         pipeline.fit(x - 1)
         assert torch.equal(pipeline.index.codebook, expected_codebook)
 
-        index = LinearPQIndex(LinearPQIndex.Config(D, M=D // 2, ksub=4))
+        index = IndexLinearPQ(IndexLinearPQ.Config(D, M=D // 2, ksub=4))
         transform = LearnedTransform(LearnedTransform.Config(D, D))
         pipeline = Pipeline(index, [transform])
         pipeline.fit(x)
 
     def test_add(self):
         x = torch.rand(N, D)
-        index = LinearFlatIndex(LinearFlatIndex.Config(D))
+        index = IndexLinearFlat(IndexLinearFlat.Config(D))
         pipeline = Pipeline(index)
         pipeline.add(x)
         assert index.N == N
 
-        index = LinearFlatIndex(LinearFlatIndex.Config(D))
+        index = IndexLinearFlat(IndexLinearFlat.Config(D))
         transform = AddOneTransform(AddOneTransform.Config(D, D))
         pipeline = Pipeline(index, [transform])
         pipeline.add(x)
@@ -185,7 +185,7 @@ class TestPipeline:
 
     def test_search(self):
         x = torch.rand(N, D)
-        index = LinearFlatIndex(LinearFlatIndex.Config(D))
+        index = IndexLinearFlat(IndexLinearFlat.Config(D))
         transform = AddOneTransform(AddOneTransform.Config(D, D))
         pipeline = Pipeline(index, [transform])
         pipeline.add(x)
