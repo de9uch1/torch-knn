@@ -65,7 +65,9 @@ class IVFPQIndex(LinearPQIndex):
         assigns = self.ivf.assign(x)
         return x - self.centroids[assigns]
 
-    def fit(self, x: torch.Tensor) -> "IVFPQIndex":
+    def fit(
+        self, x: torch.Tensor, codebook: Optional[torch.Tensor] = None
+    ) -> "IVFPQIndex":
         """Trains the index with the given vectors.
 
         Args:
@@ -76,7 +78,7 @@ class IVFPQIndex(LinearPQIndex):
         """
         self.ivf.fit(x, niter=self.cfg.train_ivf_niter)
         pq_training_vectors = self.compute_residual(x)
-        super().fit(pq_training_vectors)
+        super().fit(pq_training_vectors, codebook=codebook)
         if self.cfg.precompute:
             self.build_precompute_table()
         return self
