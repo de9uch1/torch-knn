@@ -133,7 +133,7 @@ class StoragePQ(Storage):
         """
         kmeans = ParallelKmeans(self.ksub, self.dsub, self.M)
         self._codebook = kmeans.fit(
-            x.view(x.size(0), self.M, self.dsub),
+            x.view(x.size(0), self.M, self.dsub).transpose(0, 1).contiguous(),
             niter=self.cfg.train_niter,
             initial_centroids=codebook,
         )

@@ -107,7 +107,7 @@ class TestStoragePQ:
         if exception == does_not_raise():
             torch.manual_seed(0)
             kmeans = ParallelKmeans(ksub, dsub, M)
-            codebook = kmeans.fit(x.view(N, M, dsub))
+            codebook = kmeans.fit(x.view(N, M, dsub).transpose(0, 1).contiguous())
             torch.testing.assert_close(storage.codebook, codebook)
 
     class TestADTable:

@@ -16,11 +16,12 @@ class Kmeans(nn.Module):
         ncentroids (int): The number of centroids.
         dim (int): The dimension size of centroids.
         metric (Metric): Distance metric function.
-        init (CentroidsInit): Initialization method of the centroids.
+        init (Kmeans.Init): Initialization method of the centroids.
     """
 
     class Init(Enum):
         RANDOM_PICK = "random_pick"
+        KMEANSPP = "kmeans++"
 
     def __init__(
         self,
@@ -90,6 +91,32 @@ class Kmeans(nn.Module):
                 new_centroids[k] = x[assigns == k].mean(dim=0)
         return new_centroids
 
+    def init_kmeanspp(self, x: Tensor) -> Tensor:
+        """Initializes the centroids via k-means++.
+
+        Args:
+            x (Tensor): Input vectors of shape `(n, dim)`.
+
+        Returns:
+            Tensor: Centroid vectors obtained using k-means++.
+        """
+        chosen_idxs: set[int] = set()
+        initial_idx = torch.randint(x.size(0), size=(1,)).long().item()
+        chosen_idxs.add(initial_idx)
+        centroids = x[None, initial_idx]
+        for _ in range(self.ncentroids - 1):
+            # Nc x N
+            sqdists = torch.cdist(centroids, x, p=2) ** 2
+            neighbor_sqdists = sqdists.min(dim=0).values.float().clamp(min=1e-5)
+            weights = neighbor_sqdists / neighbor_sqdists.sum()
+            new_centroid_idx = torch.multinomial(weights, 1).item()
+            while new_centroid_idx in chosen_idxs:
+                new_centroid_idx = torch.multinomial(weights, 1).item()
+            chosen_idxs.add(new_centroid_idx)
+            new_centroid = x[None, new_centroid_idx]
+            centroids = torch.cat([centroids, new_centroid])
+        return centroids
+
     def fit(
         self, x: Tensor, niter: int = 50, initial_centroids: Optional[Tensor] = None
     ) -> Tensor:
@@ -106,6 +133,8 @@ class Kmeans(nn.Module):
             self.centroids = initial_centroids.to(x)
         elif self.init == self.Init.RANDOM_PICK:
             self.centroids = x[torch.randperm(x.size(0))[: self.ncentroids]]
+        elif self.init == self.Init.KMEANSPP:
+            self.centroids = self.init_kmeanspp(x)
         else:
             self.centroids = self.centroids.to(x)
         assigns = x.new_full((x.size(0),), fill_value=-1)
@@ -206,30 +235,43 @@ class ParallelKmeans(Kmeans):
             )
         return new_centroids
 
+    def init_kmeanspp(self, x: Tensor) -> Tensor:
+        """Initializes the centroids via k-means++.
+
+        Args:
+            x (Tensor): Input vectors of shape `(nspaces, n, dim)`.
+
+        Returns:
+            Tensor: Centroid vectors obtained using k-means++.
+        """
+        centroids = []
+        for m in range(self.nspaces):
+            centroids.append(super().init_kmeanspp(x[m]))
+        return torch.stack(centroids)
+
     def fit(
         self, x: Tensor, niter: int = 50, initial_centroids: Optional[Tensor] = None
     ) -> Tensor:
         """Trains k-means.
 
         Args:
-            x (torch.Tensor): Input vectors of shape `(n, nspaces, dim)`.
+            x (torch.Tensor): Input vectors of shape `(nspaces, n, dim)`.
             niter (int): Number of training iteration.
 
         Returns:
             Tensor: Centroids tensor of shape `(nspaces, ncentroids, dim)`.
         """
+        n = x.size(1)
         if initial_centroids is not None:
             self.centroids = initial_centroids.to(x)
         elif self.init == self.Init.RANDOM_PICK:
-            self.centroids = (
-                x[torch.randperm(x.size(0))[: self.ncentroids]]
-                .transpose(0, 1)
-                .contiguous()
-            )
+            self.centroids = x[:, torch.randperm(n)[: self.ncentroids]]
+        elif self.init == self.Init.KMEANSPP:
+            self.centroids = self.init_kmeanspp(x)
         else:
             self.centroids = self.centroids.to(x)
-        x = x.transpose(0, 1).contiguous()
-        assigns = x.new_full((self.nspaces, x.size(1)), fill_value=-1)
+
+        assigns = x.new_full((self.nspaces, n), fill_value=-1)
         for i in range(niter):
             new_assigns = self.assign(x)
             if torch.equal(new_assigns, assigns):
